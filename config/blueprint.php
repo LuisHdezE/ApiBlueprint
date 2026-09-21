@@ -1,0 +1,63 @@
+<?php
+
+return [
+    'schema_version' => '0.1',
+    'api_version' => 'v1',
+    'exposures' => [
+        ['id' => 'public', 'label' => 'Public'],
+        ['id' => 'authenticated', 'label' => 'Authenticated'],
+        ['id' => 'admin', 'label' => 'Admin'],
+        ['id' => 'internal', 'label' => 'Internal'],
+    ],
+    'templates' => [
+        [
+            'id' => 'blank',
+            'name' => 'Blank API',
+            'description' => 'Start from an empty contract and enable only what the product needs.',
+            'endpoints' => [],
+        ],
+        [
+            'id' => 'crud',
+            'name' => 'REST CRUD',
+            'description' => 'A compact customer resource with standard read/write operations.',
+            'endpoints' => ['customers.list', 'customers.show', 'customers.create', 'customers.update'],
+        ],
+        [
+            'id' => 'saas',
+            'name' => 'SaaS Starter',
+            'description' => 'Authentication, users, roles and audit foundations for a governed SaaS API.',
+            'endpoints' => ['auth.login', 'auth.logout', 'users.list', 'users.show', 'users.create', 'users.update', 'roles.list', 'audit.list'],
+        ],
+        [
+            'id' => 'commerce',
+            'name' => 'Commerce Starter',
+            'description' => 'Customers, products and orders with an intentionally small public surface.',
+            'endpoints' => ['auth.login', 'customers.list', 'customers.show', 'customers.create', 'products.list', 'products.show', 'orders.list', 'orders.show', 'orders.create'],
+        ],
+    ],
+    'endpoints' => [
+        ['id' => 'auth.login', 'capability' => 'Authentication', 'method' => 'POST', 'path' => '/api/v1/auth/login', 'default_exposure' => 'public'],
+        ['id' => 'auth.logout', 'capability' => 'Authentication', 'method' => 'POST', 'path' => '/api/v1/auth/logout', 'default_exposure' => 'authenticated'],
+        ['id' => 'users.list', 'capability' => 'Users', 'method' => 'GET', 'path' => '/api/v1/users', 'default_exposure' => 'admin'],
+        ['id' => 'users.show', 'capability' => 'Users', 'method' => 'GET', 'path' => '/api/v1/users/{id}', 'default_exposure' => 'admin'],
+        ['id' => 'users.create', 'capability' => 'Users', 'method' => 'POST', 'path' => '/api/v1/users', 'default_exposure' => 'admin'],
+        ['id' => 'users.update', 'capability' => 'Users', 'method' => 'PUT', 'path' => '/api/v1/users/{id}', 'default_exposure' => 'admin'],
+        ['id' => 'users.delete', 'capability' => 'Users', 'method' => 'DELETE', 'path' => '/api/v1/users/{id}', 'default_exposure' => 'admin'],
+        ['id' => 'roles.list', 'capability' => 'Roles & Permissions', 'method' => 'GET', 'path' => '/api/v1/roles', 'default_exposure' => 'admin'],
+        ['id' => 'audit.list', 'capability' => 'Audit', 'method' => 'GET', 'path' => '/api/v1/audit-events', 'default_exposure' => 'internal'],
+        ['id' => 'customers.list', 'capability' => 'Customers', 'method' => 'GET', 'path' => '/api/v1/customers', 'default_exposure' => 'authenticated'],
+        ['id' => 'customers.show', 'capability' => 'Customers', 'method' => 'GET', 'path' => '/api/v1/customers/{id}', 'default_exposure' => 'authenticated'],
+        ['id' => 'customers.create', 'capability' => 'Customers', 'method' => 'POST', 'path' => '/api/v1/customers', 'default_exposure' => 'authenticated'],
+        ['id' => 'customers.update', 'capability' => 'Customers', 'method' => 'PUT', 'path' => '/api/v1/customers/{id}', 'default_exposure' => 'authenticated'],
+        ['id' => 'customers.delete', 'capability' => 'Customers', 'method' => 'DELETE', 'path' => '/api/v1/customers/{id}', 'default_exposure' => 'admin'],
+        ['id' => 'products.list', 'capability' => 'Products', 'method' => 'GET', 'path' => '/api/v1/products', 'default_exposure' => 'public'],
+        ['id' => 'products.show', 'capability' => 'Products', 'method' => 'GET', 'path' => '/api/v1/products/{id}', 'default_exposure' => 'public'],
+        ['id' => 'products.create', 'capability' => 'Products', 'method' => 'POST', 'path' => '/api/v1/products', 'default_exposure' => 'admin'],
+        ['id' => 'orders.list', 'capability' => 'Orders', 'method' => 'GET', 'path' => '/api/v1/orders', 'default_exposure' => 'authenticated'],
+        ['id' => 'orders.show', 'capability' => 'Orders', 'method' => 'GET', 'path' => '/api/v1/orders/{id}', 'default_exposure' => 'authenticated'],
+        ['id' => 'orders.create', 'capability' => 'Orders', 'method' => 'POST', 'path' => '/api/v1/orders', 'default_exposure' => 'authenticated'],
+        ['id' => 'payments.create', 'capability' => 'Payments', 'method' => 'POST', 'path' => '/api/v1/payments', 'default_exposure' => 'authenticated'],
+        ['id' => 'files.upload', 'capability' => 'Files', 'method' => 'POST', 'path' => '/api/v1/files', 'default_exposure' => 'authenticated'],
+        ['id' => 'webhooks.receive', 'capability' => 'Webhooks', 'method' => 'POST', 'path' => '/api/v1/webhooks/{provider}', 'default_exposure' => 'public'],
+    ],
+];

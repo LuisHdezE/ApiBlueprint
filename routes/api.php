@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Http\JsonResponse;
+use App\Presentation\Http\Controllers\BlueprintCatalogController;
+use App\Presentation\Http\Controllers\BlueprintStatusController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/v1/meta/status', static fn (): JsonResponse => response()->json([
-    'name' => 'ApiBlueprint',
-    'status' => 'ok',
-    'api_version' => 'v1',
-]));
+Route::prefix('v1')->group(function (): void {
+    Route::get('/meta/status', BlueprintStatusController::class)->name('api.v1.meta.status');
+    Route::get('/blueprint/catalog', BlueprintCatalogController::class)->name('api.v1.blueprint.catalog');
+});
