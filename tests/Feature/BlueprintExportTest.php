@@ -30,10 +30,14 @@ final class BlueprintExportTest extends TestCase
         ]);
         $manifest['governance']['authentication'] = 'none';
 
-        $this->postJson('/api/v1/blueprint/resolve', $manifest)
+        $response = $this->postJson('/api/v1/blueprint/resolve', $manifest)
             ->assertStatus(422)
-            ->assertJsonPath('title', 'Manifest de ApiBlueprint no válido')
-            ->assertJsonPath('errors.governance.authentication.0', 'La superficie seleccionada contiene endpoints protegidos y requiere una estrategia de autenticación.');
+            ->assertJsonPath('title', 'Manifest de ApiBlueprint no válido');
+
+        $this->assertSame(
+            'La superficie seleccionada contiene endpoints protegidos y requiere una estrategia de autenticación.',
+            $response->json('errors')['governance.authentication'][0] ?? null,
+        );
     }
 
     public function test_privileged_surface_requires_rbac(): void
@@ -43,9 +47,13 @@ final class BlueprintExportTest extends TestCase
         ]);
         $manifest['governance']['rbac'] = false;
 
-        $this->postJson('/api/v1/blueprint/resolve', $manifest)
-            ->assertStatus(422)
-            ->assertJsonPath('errors.governance.rbac.0', 'Los endpoints Administrador o Interno requieren RBAC habilitado.');
+        $response = $this->postJson('/api/v1/blueprint/resolve', $manifest)
+            ->assertStatus(422);
+
+        $this->assertSame(
+            'Los endpoints Administrador o Interno requieren RBAC habilitado.',
+            $response->json('errors')['governance.rbac'][0] ?? null,
+        );
     }
 
     public function test_audit_endpoint_enables_audit_capability_explicitly(): void
