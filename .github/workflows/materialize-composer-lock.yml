@@ -7,7 +7,7 @@ on:
       - .github/workflows/materialize-composer-lock.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   lock:
@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: release/u0-4-continuous-delivery
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -28,10 +30,11 @@ jobs:
       - name: Resolve lock file
         run: composer update --no-interaction --prefer-dist --no-progress
 
-      - name: Emit lock file
+      - name: Commit lock file
         shell: bash
         run: |
-          echo 'LOCK_BASE64_BEGIN'
-          base64 -w0 composer.lock
-          echo
-          echo 'LOCK_BASE64_END'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add composer.lock
+          git commit -m 'build: lock Composer dependencies for U0.4'
+          git push origin HEAD:release/u0-4-continuous-delivery
