@@ -13,7 +13,5 @@ final class AppServiceProvider extends ServiceProvider
         $this->app->bind(BlueprintCatalog::class, ConfigBlueprintCatalog::class);
     }
 
-    public function boot(): void
-    {
-    }
+    public function boot(): void {}
 }
