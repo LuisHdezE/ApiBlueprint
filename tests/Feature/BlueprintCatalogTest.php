@@ -12,17 +12,19 @@ final class BlueprintCatalogTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'ok')
             ->assertJsonPath('message', 'ApiBlueprint está operativo.')
-            ->assertJsonPath('blueprint_schema', '0.2');
+            ->assertJsonPath('blueprint_schema', '0.3');
     }
 
-    public function test_catalog_exposes_templates_and_endpoint_contracts_in_spanish(): void
+    public function test_catalog_exposes_templates_endpoint_contracts_and_governance_in_spanish(): void
     {
         $response = $this->getJson('/api/v1/blueprint/catalog')
             ->assertOk()
-            ->assertJsonPath('schema_version', '0.2')
+            ->assertJsonPath('schema_version', '0.3')
             ->assertJsonPath('api_version', 'v1')
             ->assertJsonPath('exposures.0.label', 'Público')
-            ->assertJsonPath('templates.0.name', 'API en blanco');
+            ->assertJsonPath('templates.0.name', 'API en blanco')
+            ->assertJsonPath('governance.authentication_strategies.1.label', 'Laravel Sanctum')
+            ->assertJsonPath('governance.defaults.pagination.strategy', 'cursor');
 
         $response->assertJsonCount(4, 'templates');
         $this->assertGreaterThan(10, count($response->json('endpoints')));

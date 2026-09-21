@@ -79,6 +79,8 @@ final readonly class ResolveBlueprintManifest
             }
         }
 
+        $governance = $this->resolveGovernance($manifest['governance'] ?? [], $catalog, $errors);
+
         if ($errors !== []) {
             throw new InvalidBlueprintManifest($errors);
         }
@@ -121,6 +123,21 @@ final readonly class ResolveBlueprintManifest
             }
         }
 
+        $this->validateGovernanceAgainstSurface($governance, $selected, $errors);
+        $governanceAdjustments = [];
+
+        if (isset($selected['audit.list']) && $governance['audit'] === false) {
+            $governance['audit'] = true;
+            $governanceAdjustments[] = [
+                'capability' => 'audit',
+                'reason' => 'El endpoint de auditoría requiere habilitar la capacidad de auditoría.',
+            ];
+        }
+
+        if ($errors !== []) {
+            throw new InvalidBlueprintManifest($errors);
+        }
+
         $resolvedEndpoints = [];
         foreach ($catalog['endpoints'] as $endpoint) {
             if (isset($selected[$endpoint['id']]) === false) {
@@ -140,9 +157,13 @@ final readonly class ResolveBlueprintManifest
             ];
         }
 
-        $messages = $autoAdded === []
-            ? ['La configuración es válida y no requiere dependencias adicionales.']
-            : ['La configuración es válida. ApiBlueprint añadió las dependencias obligatorias antes de exportar.'];
+        $messages = ['La configuración es válida.'];
+        if ($autoAdded !== []) {
+            $messages[] = 'ApiBlueprint añadió las dependencias de endpoints obligatorias antes de exportar.';
+        }
+        if ($governanceAdjustments !== []) {
+            $messages[] = 'ApiBlueprint ajustó capacidades transversales requeridas por la superficie seleccionada.';
+        }
 
         return [
             'schema_version' => $catalog['schema_version'],
@@ -152,11 +173,159 @@ final readonly class ResolveBlueprintManifest
                 'api_version' => $catalog['api_version'],
             ],
             'template' => $template,
+            'governance' => $governance,
             'endpoints' => $resolvedEndpoints,
             'resolution' => [
                 'auto_added' => array_values($autoAdded),
+                'governance_adjustments' => $governanceAdjustments,
                 'messages' => $messages,
             ],
         ];
+    }
+
+    private function resolveGovernance(mixed $submitted, array $catalog, array &$errors): array
+    {
+        $defaults = $catalog['governance']['defaults'];
+        $submitted = is_array($submitted) ? $submitted : [];
+
+        $authentication = (string) ($submitted['authentication'] ?? $defaults['authentication']);
+        $authenticationStrategies = array_column($catalog['governance']['authentication_strategies'], 'id');
+        if (in_array($authentication, $authenticationStrategies, true) === false) {
+            $errors['governance.authentication'][] = 'La estrategia de autenticación indicada no está soportada.';
+        }
+
+        $rbac = $this->booleanValue($submitted, 'rbac', $defaults['rbac'], $errors);
+        $correlationId = $this->booleanValue($submitted, 'correlation_id', $defaults['correlation_id'], $errors);
+        $filtering = $this->booleanValue($submitted, 'filtering', $defaults['filtering'], $errors);
+        $sorting = $this->booleanValue($submitted, 'sorting', $defaults['sorting'], $errors);
+        $idempotency = $this->booleanValue($submitted, 'idempotency', $defaults['idempotency'], $errors);
+        $audit = $this->booleanValue($submitted, 'audit', $defaults['audit'], $errors);
+
+        $rateLimiting = is_array($submitted['rate_limiting'] ?? null) ? $submitted['rate_limiting'] : [];
+        $rateLimitingEnabled = $this->booleanValue($rateLimiting, 'enabled', $defaults['rate_limiting']['enabled'], $errors, 'governance.rate_limiting.enabled');
+        $requestsPerMinute = $this->integerValue(
+            $rateLimiting,
+            'requests_per_minute',
+            $defaults['rate_limiting']['requests_per_minute'],
+            1,
+            1000,
+            $errors,
+            'governance.rate_limiting.requests_per_minute',
+        );
+
+        $pagination = is_array($submitted['pagination'] ?? null) ? $submitted['pagination'] : [];
+        $paginationStrategy = (string) ($pagination['strategy'] ?? $defaults['pagination']['strategy']);
+        $paginationStrategies = array_column($catalog['governance']['pagination_strategies'], 'id');
+        if (in_array($paginationStrategy, $paginationStrategies, true) === false) {
+            $errors['governance.pagination.strategy'][] = 'La estrategia de paginación indicada no está soportada.';
+        }
+
+        $defaultSize = $this->integerValue(
+            $pagination,
+            'default_size',
+            $defaults['pagination']['default_size'],
+            1,
+            500,
+            $errors,
+            'governance.pagination.default_size',
+        );
+        $maxSize = $this->integerValue(
+            $pagination,
+            'max_size',
+            $defaults['pagination']['max_size'],
+            1,
+            500,
+            $errors,
+            'governance.pagination.max_size',
+        );
+
+        if ($defaultSize > $maxSize) {
+            $errors['governance.pagination.default_size'][] = 'El tamaño de página predeterminado no puede superar el máximo.';
+        }
+
+        return [
+            'authentication' => $authentication,
+            'rbac' => $rbac,
+            'correlation_id' => $correlationId,
+            'rate_limiting' => [
+                'enabled' => $rateLimitingEnabled,
+                'requests_per_minute' => $requestsPerMinute,
+            ],
+            'pagination' => [
+                'strategy' => $paginationStrategy,
+                'default_size' => $defaultSize,
+                'max_size' => $maxSize,
+            ],
+            'filtering' => $filtering,
+            'sorting' => $sorting,
+            'idempotency' => $idempotency,
+            'audit' => $audit,
+        ];
+    }
+
+    private function validateGovernanceAgainstSurface(array $governance, array $selected, array &$errors): void
+    {
+        $protectedEndpointExists = false;
+        $privilegedEndpointExists = false;
+
+        foreach ($selected as $selection) {
+            if ($selection['exposure'] !== 'public') {
+                $protectedEndpointExists = true;
+            }
+
+            if (in_array($selection['exposure'], ['admin', 'internal'], true)) {
+                $privilegedEndpointExists = true;
+            }
+        }
+
+        if ($protectedEndpointExists && $governance['authentication'] === 'none') {
+            $errors['governance.authentication'][] = 'La superficie seleccionada contiene endpoints protegidos y requiere una estrategia de autenticación.';
+        }
+
+        if ($privilegedEndpointExists && $governance['rbac'] === false) {
+            $errors['governance.rbac'][] = 'Los endpoints Administrador o Interno requieren RBAC habilitado.';
+        }
+    }
+
+    private function booleanValue(
+        array $source,
+        string $key,
+        bool $default,
+        array &$errors,
+        ?string $errorKey = null,
+    ): bool {
+        if (array_key_exists($key, $source) === false) {
+            return $default;
+        }
+
+        if (is_bool($source[$key]) === false) {
+            $errors[$errorKey ?? "governance.$key"][] = 'El valor debe ser booleano.';
+
+            return $default;
+        }
+
+        return $source[$key];
+    }
+
+    private function integerValue(
+        array $source,
+        string $key,
+        int $default,
+        int $minimum,
+        int $maximum,
+        array &$errors,
+        string $errorKey,
+    ): int {
+        if (array_key_exists($key, $source) === false) {
+            return $default;
+        }
+
+        if (is_int($source[$key]) === false || $source[$key] < $minimum || $source[$key] > $maximum) {
+            $errors[$errorKey][] = "El valor debe ser un entero entre $minimum y $maximum.";
+
+            return $default;
+        }
+
+        return $source[$key];
     }
 }

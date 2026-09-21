@@ -2,7 +2,7 @@
 
 Implementación y documentación avanzan juntas. La documentación evidencia el producto ejecutable actual y no constituye una fase separada.
 
-## U0.1 - Foundation y configurador ejecutable
+## U0.1 - Foundation y configurador ejecutable ✅
 
 - Laravel 13 / PHP 8.3+
 - límites de Clean Architecture
@@ -13,7 +13,7 @@ Implementación y documentación avanzan juntas. La documentación evidencia el 
 - tests de arquitectura y funcionales
 - CI con GitHub Actions
 
-## U0.2 - Motor de exportación
+## U0.2 - Motor de exportación ✅
 
 - política de idioma: código en inglés, superficie visible en español
 - validación del manifest en servidor
@@ -33,6 +33,13 @@ Implementación y documentación avanzan juntas. La documentación evidencia el 
 - contratos de paginación, filtrado y ordenamiento
 - base de idempotencia
 - capability de auditoría
+
+## U0.4 - Entrega continua y runtime público
+
+- pipeline de deployment desde `main`
+- publicación del configurador en Eliasworks
+- smoke tests posteriores al deployment
+- rollback/documentación de operación
 
 ## Destino de entrega
 
