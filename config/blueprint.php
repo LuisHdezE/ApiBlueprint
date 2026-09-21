@@ -1,13 +1,41 @@
 <?php
 
 return [
-    'schema_version' => '0.2',
+    'schema_version' => '0.3',
     'api_version' => 'v1',
     'exposures' => [
         ['id' => 'public', 'label' => 'Público'],
         ['id' => 'authenticated', 'label' => 'Autenticado'],
         ['id' => 'admin', 'label' => 'Administrador'],
         ['id' => 'internal', 'label' => 'Interno'],
+    ],
+    'governance' => [
+        'authentication_strategies' => [
+            ['id' => 'none', 'label' => 'Sin autenticación'],
+            ['id' => 'sanctum', 'label' => 'Laravel Sanctum'],
+        ],
+        'pagination_strategies' => [
+            ['id' => 'cursor', 'label' => 'Cursor'],
+            ['id' => 'offset', 'label' => 'Offset'],
+        ],
+        'defaults' => [
+            'authentication' => 'sanctum',
+            'rbac' => true,
+            'correlation_id' => true,
+            'rate_limiting' => [
+                'enabled' => true,
+                'requests_per_minute' => 60,
+            ],
+            'pagination' => [
+                'strategy' => 'cursor',
+                'default_size' => 25,
+                'max_size' => 100,
+            ],
+            'filtering' => true,
+            'sorting' => true,
+            'idempotency' => true,
+            'audit' => true,
+        ],
     ],
     'templates' => [
         [
