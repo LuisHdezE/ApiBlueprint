@@ -41,6 +41,9 @@
         .summary span { font-size:11px; color:#718096; }
         .export { width:100%; margin-top:18px; border:0; border-radius:14px; padding:13px 16px; background:#2563eb; color:#fff; font-weight:850; cursor:pointer; }
         .export:hover { background:#1d4ed8; }
+        .export:disabled { opacity:.55; cursor:wait; }
+        .notice { margin-top:12px; border:1px solid #c9dcff; background:#eff6ff; color:#24466f; border-radius:12px; padding:11px 12px; font-size:12px; line-height:1.5; }
+        .notice.error { border-color:#fecaca; background:#fef2f2; color:#991b1b; }
         .endpoint-head,.endpoint { display:grid; grid-template-columns:38px 92px 1fr 175px; gap:12px; align-items:center; }
         .endpoint-head { padding:0 10px 10px; color:#8793a5; font-size:11px; font-weight:850; text-transform:uppercase; letter-spacing:.08em; }
         .endpoint { padding:12px 10px; border-top:1px solid #edf1f6; }
@@ -68,11 +71,11 @@
         <div>
             <div class="eyebrow">Construye únicamente lo que expone el contrato</div>
             <h1>Diseña la API antes de que la API diseñe tu proyecto.</h1>
-            <p>Elige una plantilla gobernada, edita su superficie de endpoints y exporta un manifest explícito. Los endpoints no seleccionados no pertenecen al contrato exportado.</p>
+            <p>Elige una plantilla gobernada, edita su superficie de endpoints y exporta una solución Laravel coherente. Los endpoints no seleccionados no pertenecen al paquete generado.</p>
         </div>
         <aside class="hero-note">
             <div class="stat" id="hero-count">0 endpoints</div>
-            <p>La exposición de endpoints es configuración del producto, no decoración de Swagger.</p>
+            <p>ApiBlueprint resuelve dependencias antes de exportar y deja visible cualquier endpoint añadido obligatoriamente.</p>
         </aside>
     </header>
 
@@ -93,8 +96,9 @@
                 <div><b id="capability-count">0</b><span>capacidades</span></div>
             </div>
 
-            <button id="export" class="export" type="button">Exportar manifest</button>
-            <p class="footnote">Este manifest será validado por el backend y servirá como única fuente de verdad para generar la solución Laravel.</p>
+            <button id="export" class="export" type="button">Exportar solución ZIP</button>
+            <div id="notice" class="notice" hidden></div>
+            <p class="footnote">El backend valida el manifest, reconstruye rutas y métodos desde el catálogo canónico y agrega dependencias obligatorias antes de generar el ZIP.</p>
         </aside>
 
         <div class="panel">
@@ -113,8 +117,16 @@
     const enabledCountEl = document.getElementById('enabled-count');
     const capabilityCountEl = document.getElementById('capability-count');
     const heroCountEl = document.getElementById('hero-count');
+    const exportButton = document.getElementById('export');
+    const noticeEl = document.getElementById('notice');
 
     const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[char]));
+
+    function showNotice(message, isError = false) {
+        noticeEl.hidden = false;
+        noticeEl.textContent = message;
+        noticeEl.classList.toggle('error', isError);
+    }
 
     function applyTemplate(template) {
         state.template = template;
@@ -123,6 +135,7 @@
             enabled: enabled.has(endpoint.id),
             exposure: endpoint.default_exposure,
         }]));
+        noticeEl.hidden = true;
         render();
     }
 
@@ -158,6 +171,7 @@
                 renderSummary();
             });
         });
+
         endpointsEl.querySelectorAll('[data-exposure]').forEach(select => {
             select.addEventListener('change', () => state.selected.get(select.dataset.exposure).exposure = select.value);
         });
@@ -178,36 +192,100 @@
         renderSummary();
     }
 
-    function exportManifest() {
+    function buildManifest() {
         const projectName = document.getElementById('project-name').value.trim() || 'mi-api';
         const endpoints = state.catalog.endpoints
             .filter(endpoint => state.selected.get(endpoint.id)?.enabled)
             .map(endpoint => ({
                 id: endpoint.id,
-                capability: endpoint.capability,
-                method: endpoint.method,
-                path: endpoint.path,
                 exposure: state.selected.get(endpoint.id).exposure,
             }));
 
-        const manifest = {
+        return {
             schema_version: state.catalog.schema_version,
             generator: 'ApiBlueprint',
             project: { name: projectName, api_version: state.catalog.api_version },
             template: state.template?.id ?? 'custom',
             endpoints,
         };
-
-        const blob = new Blob([JSON.stringify(manifest, null, 2) + '\n'], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `${projectName.replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()}.apiblueprint.json`;
-        anchor.click();
-        URL.revokeObjectURL(url);
     }
 
-    document.getElementById('export').addEventListener('click', exportManifest);
+    async function resolveManifest(manifest) {
+        const response = await fetch('/api/v1/blueprint/resolve', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify(manifest),
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+            const errors = payload.errors ? Object.values(payload.errors).flat().join(' ') : payload.detail;
+            throw new Error(errors || 'No se pudo validar la configuración.');
+        }
+
+        return payload;
+    }
+
+    function applyResolvedManifest(resolved) {
+        const resolvedById = new Map(resolved.endpoints.map(endpoint => [endpoint.id, endpoint]));
+
+        state.catalog.endpoints.forEach(endpoint => {
+            const resolvedEndpoint = resolvedById.get(endpoint.id);
+            const selection = state.selected.get(endpoint.id);
+            selection.enabled = Boolean(resolvedEndpoint);
+            if (resolvedEndpoint) selection.exposure = resolvedEndpoint.exposure;
+        });
+
+        renderEndpoints();
+        renderSummary();
+
+        const autoAdded = resolved.resolution.auto_added.map(item => item.id);
+        if (autoAdded.length > 0) {
+            showNotice(`Dependencias añadidas automáticamente: ${autoAdded.join(', ')}. La selección visible ya coincide con lo que se exportará.`);
+        } else {
+            showNotice('Configuración validada. No fue necesario añadir dependencias.');
+        }
+    }
+
+    async function exportSolution() {
+        exportButton.disabled = true;
+        exportButton.textContent = 'Validando y generando…';
+        noticeEl.hidden = true;
+
+        try {
+            const resolved = await resolveManifest(buildManifest());
+            applyResolvedManifest(resolved);
+
+            const response = await fetch('/api/v1/blueprint/export', {
+                method: 'POST',
+                headers: { 'Accept': 'application/zip', 'Content-Type': 'application/json' },
+                body: JSON.stringify(resolved),
+            });
+
+            if (!response.ok) {
+                const payload = await response.json();
+                const errors = payload.errors ? Object.values(payload.errors).flat().join(' ') : payload.detail;
+                throw new Error(errors || 'No se pudo generar la solución.');
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            const projectName = resolved.project.name.replace(/[^a-z0-9-_]+/gi, '-').toLowerCase() || 'api';
+            anchor.href = url;
+            anchor.download = `${projectName}.zip`;
+            anchor.click();
+            URL.revokeObjectURL(url);
+            showNotice('Solución generada correctamente. El ZIP contiene el manifest resuelto, las rutas seleccionadas, OpenAPI en español y sus tests contractuales.');
+        } catch (error) {
+            showNotice(error.message || 'Ocurrió un error al exportar la solución.', true);
+        } finally {
+            exportButton.disabled = false;
+            exportButton.textContent = 'Exportar solución ZIP';
+        }
+    }
+
+    exportButton.addEventListener('click', exportSolution);
 
     fetch('/api/v1/blueprint/catalog', { headers: { Accept: 'application/json' } })
         .then(response => {
