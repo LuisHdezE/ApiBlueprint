@@ -1,0 +1,37 @@
+name: Materialize Composer Lock
+
+on:
+  push:
+    branches: [release/u0-4-continuous-delivery]
+    paths:
+      - .github/workflows/materialize-composer-lock.yml
+
+permissions:
+  contents: read
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Resolve lock file
+        run: composer update --no-interaction --prefer-dist --no-progress
+
+      - name: Emit lock file
+        shell: bash
+        run: |
+          echo 'LOCK_BASE64_BEGIN'
+          base64 -w0 composer.lock
+          echo
+          echo 'LOCK_BASE64_END'
