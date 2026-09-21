@@ -34,7 +34,7 @@ final readonly class ResolveBlueprintManifest
 
         $template = $manifest['template'] ?? 'custom';
         $templateIds = array_column($catalog['templates'], 'id');
-        if (! is_string($template) || ($template !== 'custom' && ! in_array($template, $templateIds, true))) {
+        if (is_string($template) === false || ($template !== 'custom' && in_array($template, $templateIds, true) === false)) {
             $errors['template'][] = 'La plantilla indicada no existe.';
         }
 
@@ -47,11 +47,11 @@ final readonly class ResolveBlueprintManifest
         $submittedEndpoints = $manifest['endpoints'] ?? null;
         $selected = [];
 
-        if (! is_array($submittedEndpoints)) {
+        if (is_array($submittedEndpoints) === false) {
             $errors['endpoints'][] = 'La colección de endpoints es obligatoria.';
         } else {
             foreach ($submittedEndpoints as $index => $submittedEndpoint) {
-                if (! is_array($submittedEndpoint)) {
+                if (is_array($submittedEndpoint) === false) {
                     $errors["endpoints.$index"][] = 'El endpoint debe ser un objeto válido.';
                     continue;
                 }
@@ -59,12 +59,12 @@ final readonly class ResolveBlueprintManifest
                 $id = (string) ($submittedEndpoint['id'] ?? '');
                 $exposure = (string) ($submittedEndpoint['exposure'] ?? '');
 
-                if (! isset($endpointDefinitions[$id])) {
+                if (isset($endpointDefinitions[$id]) === false) {
                     $errors["endpoints.$index.id"][] = "El endpoint '$id' no pertenece al catálogo de ApiBlueprint.";
                     continue;
                 }
 
-                if (! in_array($exposure, $allowedExposures, true)) {
+                if (in_array($exposure, $allowedExposures, true) === false) {
                     $errors["endpoints.$index.exposure"][] = 'El perfil de exposición indicado no es válido.';
                     continue;
                 }
@@ -91,11 +91,11 @@ final readonly class ResolveBlueprintManifest
                 ));
 
                 foreach ($requiredEndpoints as $requiredEndpointId) {
-                    if (! isset($endpointDefinitions[$requiredEndpointId])) {
+                    if (isset($endpointDefinitions[$requiredEndpointId]) === false) {
                         throw new RuntimeException("Unknown configured dependency: $requiredEndpointId");
                     }
 
-                    if (! isset($selected[$requiredEndpointId])) {
+                    if (isset($selected[$requiredEndpointId]) === false) {
                         $selected[$requiredEndpointId] = [
                             'exposure' => $endpointDefinitions[$requiredEndpointId]['default_exposure'],
                         ];
@@ -107,7 +107,7 @@ final readonly class ResolveBlueprintManifest
                         continue;
                     }
 
-                    if (isset($autoAdded[$requiredEndpointId]) && ! in_array($endpointId, $autoAdded[$requiredEndpointId]['required_by'], true)) {
+                    if (isset($autoAdded[$requiredEndpointId]) && in_array($endpointId, $autoAdded[$requiredEndpointId]['required_by'], true) === false) {
                         $autoAdded[$requiredEndpointId]['required_by'][] = $endpointId;
                     }
                 }
@@ -116,7 +116,7 @@ final readonly class ResolveBlueprintManifest
 
         $resolvedEndpoints = [];
         foreach ($catalog['endpoints'] as $endpoint) {
-            if (! isset($selected[$endpoint['id']])) {
+            if (isset($selected[$endpoint['id']]) === false) {
                 continue;
             }
 
