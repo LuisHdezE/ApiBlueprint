@@ -1,0 +1,171 @@
+name: Deploy ApiBlueprint Production
+
+on:
+  push:
+    branches: [deploy/production]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apiblueprint-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Promote approved main commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: ${{ vars.APIBLUEPRINT_PUBLIC_URL }}
+    env:
+      PUBLIC_URL: ${{ vars.APIBLUEPRINT_PUBLIC_URL }}
+      FTP_SERVER_DIR: ${{ vars.APIBLUEPRINT_FTP_SERVER_DIR }}
+      FTP_SERVER: ftp.eliasworks.uy
+      FTP_USERNAME: luis@eliasworks.uy
+      FTP_PORT: '21'
+
+    steps:
+      - name: Checkout promoted commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Validate promotion source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = 'deploy/production'
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+          test -f composer.lock
+
+      - name: Validate production configuration
+        shell: bash
+        env:
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$FTP_PASSWORD"
+          test -n "$PUBLIC_URL"
+          test -n "$FTP_SERVER_DIR"
+          [[ "$PUBLIC_URL" == https://* ]]
+          [[ "$FTP_SERVER_DIR" == */ ]]
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.4'
+          extensions: zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate locked dependencies
+        run: composer validate --strict
+
+      - name: Install verification dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Verify promoted commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .env.example .env
+          php artisan key:generate
+          vendor/bin/pint --test
+          php artisan test
+          php artisan route:list --path=api/v1
+          rm -f .env
+
+      - name: Install production dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf vendor
+          composer install --no-interaction --prefer-dist --no-progress --no-dev --optimize-autoloader
+
+      - name: Build immutable release directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf release
+          mkdir -p release
+          rsync -a ./ release/ \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='deployment/' \
+            --exclude='docs/' \
+            --exclude='release/' \
+            --exclude='tests/' \
+            --exclude='phpunit.xml' \
+            --exclude='.editorconfig'
+
+          find release/storage/logs -type f ! -name '.gitignore' -delete 2>/dev/null || true
+          find release/storage/framework/cache -type f ! -name '.gitignore' -delete 2>/dev/null || true
+          find release/storage/framework/sessions -type f ! -name '.gitignore' -delete 2>/dev/null || true
+          find release/storage/framework/views -type f ! -name '.gitignore' -delete 2>/dev/null || true
+          find release/bootstrap/cache -type f ! -name '.gitignore' -delete 2>/dev/null || true
+
+          RELEASED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > release/public/release.json <<JSON
+          {
+            "application": "ApiBlueprint",
+            "commit": "$GITHUB_SHA",
+            "promotion_ref": "$GITHUB_REF_NAME",
+            "workflow_run": "$GITHUB_RUN_ID",
+            "released_at": "$RELEASED_AT"
+          }
+          JSON
+
+      - name: Deploy release by FTP
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
+        with:
+          server: ${{ env.FTP_SERVER }}
+          username: ${{ env.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ env.FTP_PORT }}
+          protocol: ftp
+          local-dir: ./release/
+          server-dir: ${{ env.FTP_SERVER_DIR }}
+          state-name: .apiblueprint-ftp-state.json
+          dangerous-clean-slate: false
+          log-level: standard
+          timeout: 120000
+          exclude: |
+            .env
+            .env.*
+            **/.env
+            **/.env.*
+
+      - name: Production smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_URL="${PUBLIC_URL%/}"
+
+          curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 \
+            "$BASE_URL/" > /tmp/apiblueprint-landing.html
+          grep -q 'ApiBlueprint' /tmp/apiblueprint-landing.html
+
+          curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 \
+            "$BASE_URL/api/v1/meta/status" > /tmp/apiblueprint-status.json
+          php -r '$data=json_decode(file_get_contents("/tmp/apiblueprint-status.json"), true, 512, JSON_THROW_ON_ERROR); if (($data["status"] ?? null) !== "ok" || ($data["blueprint_schema"] ?? null) !== "0.3") { fwrite(STDERR, "Runtime status contract failed.\n"); exit(1); }'
+
+          curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 \
+            "$BASE_URL/release.json" > /tmp/apiblueprint-release.json
+          DEPLOYED_SHA="$(php -r '$data=json_decode(file_get_contents("/tmp/apiblueprint-release.json"), true, 512, JSON_THROW_ON_ERROR); echo $data["commit"] ?? "";')"
+          test "$DEPLOYED_SHA" = "$GITHUB_SHA"
+
+          HTTP_STATUS="$(curl --silent --show-error --output /tmp/apiblueprint-export.zip --write-out '%{http_code}' \
+            --request POST \
+            --header 'Accept: application/zip' \
+            --header 'Content-Type: application/json' \
+            --data @deployment/smoke-manifest.json \
+            "$BASE_URL/api/v1/blueprint/export")"
+          test "$HTTP_STATUS" = '200'
+          test "$(head -c 2 /tmp/apiblueprint-export.zip)" = 'PK'
+
+          echo "Producción verificada en commit $GITHUB_SHA."
