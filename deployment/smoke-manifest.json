@@ -1,0 +1,33 @@
+{
+  "schema_version": "0.3",
+  "generator": "ApiBlueprint",
+  "project": {
+    "name": "Smoke Production API",
+    "api_version": "v1"
+  },
+  "template": "custom",
+  "governance": {
+    "authentication": "none",
+    "rbac": false,
+    "correlation_id": true,
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 60
+    },
+    "pagination": {
+      "strategy": "cursor",
+      "default_size": 25,
+      "max_size": 100
+    },
+    "filtering": true,
+    "sorting": true,
+    "idempotency": true,
+    "audit": true
+  },
+  "endpoints": [
+    {
+      "id": "products.list",
+      "exposure": "public"
+    }
+  ]
+}
