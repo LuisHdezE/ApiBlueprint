@@ -56,6 +56,7 @@ final readonly class ResolveBlueprintManifest
             foreach ($submittedEndpoints as $index => $submittedEndpoint) {
                 if (is_array($submittedEndpoint) === false) {
                     $errors["endpoints.$index"][] = 'El endpoint debe ser un objeto válido.';
+
                     continue;
                 }
 
@@ -64,11 +65,13 @@ final readonly class ResolveBlueprintManifest
 
                 if (isset($endpointDefinitions[$id]) === false) {
                     $errors["endpoints.$index.id"][] = "El endpoint '$id' no pertenece al catálogo de ApiBlueprint.";
+
                     continue;
                 }
 
                 if (in_array($exposure, $allowedExposures, true) === false) {
                     $errors["endpoints.$index.exposure"][] = 'El perfil de exposición indicado no es válido.';
+
                     continue;
                 }
 
@@ -107,6 +110,7 @@ final readonly class ResolveBlueprintManifest
                             'required_by' => [$endpointId],
                         ];
                         $changed = true;
+
                         continue;
                     }
 
@@ -120,6 +124,7 @@ final readonly class ResolveBlueprintManifest
         $resolvedEndpoints = [];
         foreach ($catalog['endpoints'] as $endpoint) {
             if (isset($selected[$endpoint['id']]) === false) {
+
                 continue;
             }
 
