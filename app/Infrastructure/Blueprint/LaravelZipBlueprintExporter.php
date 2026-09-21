@@ -59,8 +59,8 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             'tests/Feature/GeneratedGovernanceContractTest.php' => $this->governanceContractTestFile($manifest),
             'phpunit.xml' => $this->phpUnitFile(),
             'openapi/openapi.yaml' => $this->openApiFile($manifest),
-            'app/Domain/README.md' => "# Domain\n\nEste directorio debe contener el modelo de dominio puro, sin dependencias de Laravel.\n",
-            'app/Application/README.md' => "# Application\n\nEste directorio debe contener casos de uso, puertos y contratos independientes del framework.\n",
+            'app/Domain/README.md' => "# Domain\n\nModelo de dominio puro, sin dependencias de Laravel.\n",
+            'app/Application/README.md' => "# Application\n\nCasos de uso, puertos y contratos independientes del framework.\n",
         ];
 
         if ($manifest['governance']['correlation_id']) {
@@ -174,24 +174,24 @@ PHP;
             'use Illuminate\\Validation\\ValidationException;',
             'use Symfony\\Component\\HttpKernel\\Exception\\HttpExceptionInterface;',
         ];
-        $middleware = [];
+        $middlewareLines = [];
 
         if ($manifest['governance']['correlation_id']) {
             $imports[] = 'use App\\Presentation\\Http\\Middleware\\CorrelationIdMiddleware;';
-            $middleware[] = '        $middleware->append(CorrelationIdMiddleware::class);';
+            $middlewareLines[] = '        $middleware->append(CorrelationIdMiddleware::class);';
         }
         if ($manifest['governance']['idempotency']) {
             $imports[] = 'use App\\Presentation\\Http\\Middleware\\IdempotencyMiddleware;';
-            $middleware[] = "        \$middleware->alias(['idempotency' => IdempotencyMiddleware::class]);";
+            $middlewareLines[] = "        \$middleware->alias(['idempotency' => IdempotencyMiddleware::class]);";
         }
         if ($manifest['governance']['audit']) {
             $imports[] = 'use App\\Presentation\\Http\\Middleware\\AuditRequestMiddleware;';
-            $middleware[] = "        \$middleware->alias(['audit.request' => AuditRequestMiddleware::class]);";
+            $middlewareLines[] = "        \$middleware->alias(['audit.request' => AuditRequestMiddleware::class]);";
         }
 
         sort($imports);
         $importsText = implode("\n", $imports);
-        $middlewareText = $middleware === [] ? '        //' : implode("\n", $middleware);
+        $middlewareText = $middlewareLines === [] ? '        //' : implode("\n", $middlewareLines);
 
         return <<<PHP
 <?php
@@ -211,7 +211,6 @@ $middlewareText
         \$exceptions->shouldRenderJsonWhen(
             static fn (Request \$request, \\Throwable \$exception): bool => \$request->is('api/*') || \$request->expectsJson(),
         );
-
         \$exceptions->render(function (\\Throwable \$exception, Request \$request) {
             if (\$request->is('api/*') === false) {
                 return null;
@@ -233,18 +232,13 @@ $middlewareText
                 429 => 'Demasiadas solicitudes',
                 default => \$status >= 500 ? 'Error interno del servidor' : 'Solicitud no válida',
             };
-            \$detail = \$status >= 500
-                ? 'Ocurrió un error inesperado al procesar la solicitud.'
-                : 'La solicitud no pudo procesarse.';
-            \$extensions = \$exception instanceof ValidationException
-                ? ['errors' => \$exception->errors()]
-                : [];
+            \$extensions = \$exception instanceof ValidationException ? ['errors' => \$exception->errors()] : [];
 
             return ProblemDetails::response(
                 request: \$request,
                 status: \$status,
                 title: \$title,
-                detail: \$detail,
+                detail: \$status >= 500 ? 'Ocurrió un error inesperado al procesar la solicitud.' : 'La solicitud no pudo procesarse.',
                 type: "https://eliasworks.uy/problems/http-\$status",
                 extensions: \$extensions,
             );
@@ -276,12 +270,14 @@ PHP;
             $imports[] = "use App\\Presentation\\Http\\Controllers\\Generated\\$className;";
             $method = strtolower($endpoint['method']);
             $path = preg_replace('#^/api#', '', $endpoint['path']) ?? $endpoint['path'];
-            $middlewares = $this->routeMiddleware($endpoint, $manifest['governance']);
+            $middleware = $this->routeMiddleware($endpoint, $manifest['governance']);
             $route = "Route::$method('$path', $className::class)->name('api.v1.{$endpoint['id']}')";
-            if ($middlewares !== []) {
-                $serialized = implode(', ', array_map(static fn (string $value): string => "'$value'", $middlewares));
+
+            if ($middleware !== []) {
+                $serialized = implode(', ', array_map(static fn (string $value): string => "'$value'", $middleware));
                 $route .= "->middleware([$serialized])";
             }
+
             $routes[] = $route.';';
         }
 
@@ -632,37 +628,37 @@ PHP;
     private function serviceProviderFile(array $manifest): string
     {
         $imports = ['use Illuminate\\Support\\ServiceProvider;'];
-        $register = [];
-        $boot = [];
+        $registerLines = [];
+        $bootLines = [];
         $governance = $manifest['governance'];
 
         if ($governance['idempotency']) {
             $imports[] = 'use App\\Application\\Shared\\Contracts\\IdempotencyStore;';
             $imports[] = 'use App\\Infrastructure\\Idempotency\\CacheIdempotencyStore;';
-            $register[] = '        $this->app->bind(IdempotencyStore::class, CacheIdempotencyStore::class);';
+            $registerLines[] = '        $this->app->bind(IdempotencyStore::class, CacheIdempotencyStore::class);';
         }
         if ($governance['audit']) {
             $imports[] = 'use App\\Application\\Shared\\Contracts\\AuditTrail;';
             $imports[] = 'use App\\Infrastructure\\Audit\\LogAuditTrail;';
-            $register[] = '        $this->app->bind(AuditTrail::class, LogAuditTrail::class);';
+            $registerLines[] = '        $this->app->bind(AuditTrail::class, LogAuditTrail::class);';
         }
         if ($governance['rate_limiting']['enabled']) {
             $imports[] = 'use Illuminate\\Cache\\RateLimiting\\Limit;';
             $imports[] = 'use Illuminate\\Http\\Request;';
             $imports[] = 'use Illuminate\\Support\\Facades\\RateLimiter;';
-            $rpm = $governance['rate_limiting']['requests_per_minute'];
-            $boot[] = "        RateLimiter::for('api', static fn (Request \$request): Limit => Limit::perMinute($rpm)->by((string) (\$request->user()?->getAuthIdentifier() ?? \$request->ip())));";
+            $requestsPerMinute = $governance['rate_limiting']['requests_per_minute'];
+            $bootLines[] = "        RateLimiter::for('api', static fn (Request \$request): Limit => Limit::perMinute($requestsPerMinute)->by((string) (\$request->user()?->getAuthIdentifier() ?? \$request->ip())));";
         }
         if ($governance['rbac']) {
             $imports[] = 'use Illuminate\\Support\\Facades\\Gate;';
-            $boot[] = "        Gate::define('admin-api', static fn (object \$user): bool => method_exists(\$user, 'hasRole') ? (bool) \$user->hasRole('admin') : ((\$user->role ?? null) === 'admin'));";
-            $boot[] = "        Gate::define('internal-api', static fn (object \$user): bool => method_exists(\$user, 'hasRole') ? (bool) (\$user->hasRole('internal') || \$user->hasRole('admin')) : in_array(\$user->role ?? null, ['internal', 'admin'], true));";
+            $bootLines[] = "        Gate::define('admin-api', static fn (object \$user): bool => method_exists(\$user, 'hasRole') ? (bool) \$user->hasRole('admin') : ((\$user->role ?? null) === 'admin'));";
+            $bootLines[] = "        Gate::define('internal-api', static fn (object \$user): bool => method_exists(\$user, 'hasRole') ? (bool) (\$user->hasRole('internal') || \$user->hasRole('admin')) : in_array(\$user->role ?? null, ['internal', 'admin'], true));";
         }
 
         sort($imports);
         $importsText = implode("\n", $imports);
-        $registerText = $register === [] ? '        //' : implode("\n", $register);
-        $bootText = $boot === [] ? '        //' : implode("\n", $boot);
+        $registerText = $registerLines === [] ? '        //' : implode("\n", $registerLines);
+        $bootText = $bootLines === [] ? '        //' : implode("\n", $bootLines);
 
         return <<<PHP
 <?php
@@ -864,63 +860,6 @@ XML;
         $governance = $manifest['governance'];
 
         return "# {$manifest['project']['name']}\n\nSolución Laravel generada por **ApiBlueprint**. El código se mantiene en inglés; mensajes, errores y OpenAPI se presentan en español.\n\n## Gobierno exportado\n\n- Autenticación: `{$governance['authentication']}`\n- RBAC: ".($governance['rbac'] ? 'sí' : 'no')."\n- Correlation ID: ".($governance['correlation_id'] ? 'sí' : 'no')."\n- Rate limit: ".($governance['rate_limiting']['enabled'] ? $governance['rate_limiting']['requests_per_minute'].' solicitudes/minuto' : 'deshabilitado')."\n- Paginación: `{$governance['pagination']['strategy']}`\n- Idempotencia: ".($governance['idempotency'] ? 'sí' : 'no')."\n- Auditoría: ".($governance['audit'] ? 'sí' : 'no')."\n\n## Endpoints exportados\n\n| Método | Ruta | Descripción | Exposición |\n| --- | --- | --- | --- |\n$table\n\n## Inicio rápido\n\n```bash\ncomposer install\ncp .env.example .env\nphp artisan key:generate\nphp artisan test\nphp artisan serve\n```\n\nLos casos de uso generados responden inicialmente con HTTP 501. Los endpoints y capacidades no seleccionados no se incluyen como infraestructura dormida.\n";
-    }
-
-    private function serviceProviderFile(array $manifest): string
-    {
-        $imports = ['use Illuminate\\Support\\ServiceProvider;'];
-        $register = [];
-        $boot = [];
-        $governance = $manifest['governance'];
-
-        if ($governance['idempotency']) {
-            $imports[] = 'use App\\Application\\Shared\\Contracts\\IdempotencyStore;';
-            $imports[] = 'use App\\Infrastructure\\Idempotency\\CacheIdempotencyStore;';
-            $register[] = '        $this->app->bind(IdempotencyStore::class, CacheIdempotencyStore::class);';
-        }
-        if ($governance['audit']) {
-            $imports[] = 'use App\\Application\\Shared\\Contracts\\AuditTrail;';
-            $imports[] = 'use App\\Infrastructure\\Audit\\LogAuditTrail;';
-            $register[] = '        $this->app->bind(AuditTrail::class, LogAuditTrail::class);';
-        }
-        if ($governance['rate_limiting']['enabled']) {
-            $imports[] = 'use Illuminate\\Cache\\RateLimiting\\Limit;';
-            $imports[] = 'use Illuminate\\Http\\Request;';
-            $imports[] = 'use Illuminate\\Support\\Facades\\RateLimiter;';
-            $rpm = $governance['rate_limiting']['requests_per_minute'];
-            $boot[] = "        RateLimiter::for('api', static fn (Request \$request): Limit => Limit::perMinute($rpm)->by((string) (\$request->user()?->getAuthIdentifier() ?? \$request->ip())));";
-        }
-        if ($governance['rbac']) {
-            $imports[] = 'use Illuminate\\Support\\Facades\\Gate;';
-            $boot[] = "        Gate::define('admin-api', static fn (object \$user): bool => method_exists(\$user, 'hasRole') ? (bool) \$user->hasRole('admin') : ((\$user->role ?? null) === 'admin'));";
-            $boot[] = "        Gate::define('internal-api', static fn (object \$user): bool => method_exists(\$user, 'hasRole') ? (bool) (\$user->hasRole('internal') || \$user->hasRole('admin')) : in_array(\$user->role ?? null, ['internal', 'admin'], true));";
-        }
-
-        sort($imports);
-        $importsText = implode("\n", $imports);
-        $registerText = $register === [] ? '        //' : implode("\n", $register);
-        $bootText = $boot === [] ? '        //' : implode("\n", $boot);
-
-        return <<<PHP
-<?php
-
-namespace App\Providers;
-
-$importsText
-
-final class AppServiceProvider extends ServiceProvider
-{
-    public function register(): void
-    {
-$registerText
-    }
-
-    public function boot(): void
-    {
-$bootText
-    }
-}
-PHP;
     }
 
     private function controllerClassName(string $endpointId): string
