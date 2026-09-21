@@ -10,7 +10,6 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -24,10 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            static fn (Request $request, Throwable $exception): bool => $request->is('api/*') || $request->expectsJson(),
+            static fn (Request $request): bool => $request->is('api/*') || $request->expectsJson(),
         );
 
-        $exceptions->render(function (Throwable $exception, Request $request) {
+        $exceptions->render(function (object $exception, Request $request) {
             if ($request->is('api/*') === false) {
                 return null;
             }
