@@ -13,7 +13,7 @@ final class BlueprintStatusController
             'status' => 'ok',
             'message' => 'ApiBlueprint está operativo.',
             'api_version' => 'v1',
-            'blueprint_schema' => '0.2',
+            'blueprint_schema' => '0.3',
         ]);
     }
 }
