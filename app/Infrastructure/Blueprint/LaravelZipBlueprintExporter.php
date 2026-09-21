@@ -10,10 +10,6 @@ use ZipArchive;
 
 final class LaravelZipBlueprintExporter implements BlueprintExporter
 {
-    /**
-     * @param array<string, mixed> $manifest
-     * @throws JsonException
-     */
     public function export(array $manifest): ExportedBlueprint
     {
         $projectName = (string) $manifest['project']['name'];
@@ -45,11 +41,6 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
         return new ExportedBlueprint("$slug.zip", $content);
     }
 
-    /**
-     * @param array<string, mixed> $manifest
-     * @return array<string, string>
-     * @throws JsonException
-     */
     private function buildFiles(array $manifest): array
     {
         $files = [
@@ -79,9 +70,6 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
         return $files;
     }
 
-    /**
-     * @param array<string, mixed> $manifest
-     */
     private function environmentFile(array $manifest): string
     {
         return implode("\n", [
@@ -101,9 +89,6 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
         ]);
     }
 
-    /**
-     * @param array<string, mixed> $manifest
-     */
     private function composerFile(array $manifest): string
     {
         $name = 'generated/'.$this->slug((string) $manifest['project']['name']);
@@ -190,9 +175,6 @@ require __DIR__.'/../vendor/autoload.php';
 PHP;
     }
 
-    /**
-     * @param array<string, mixed> $manifest
-     */
     private function routesFile(array $manifest): string
     {
         $imports = [];
@@ -211,9 +193,6 @@ PHP;
         return "<?php\n\n".implode("\n", $imports)."\nuse Illuminate\\Support\\Facades\\Route;\n\n".implode("\n", $routes)."\n";
     }
 
-    /**
-     * @param array<string, mixed> $endpoint
-     */
     private function controllerFile(array $endpoint, string $className): string
     {
         $endpointId = var_export($endpoint['id'], true);
@@ -255,9 +234,6 @@ abstract class TestCase extends BaseTestCase {}
 PHP;
     }
 
-    /**
-     * @param array<string, mixed> $manifest
-     */
     private function contractTestFile(array $manifest): string
     {
         $rows = [];
@@ -278,9 +254,6 @@ use Tests\TestCase;
 
 final class GeneratedEndpointContractTest extends TestCase
 {
-    /**
-     * @return array<string, array{string, string}>
-     */
     public static function endpoints(): array
     {
         return [
@@ -318,9 +291,6 @@ PHP;
 XML;
     }
 
-    /**
-     * @param array<string, mixed> $manifest
-     */
     private function openApiFile(array $manifest): string
     {
         $paths = [];
@@ -354,9 +324,6 @@ XML;
         return implode("\n", $lines)."\n";
     }
 
-    /**
-     * @param array<string, mixed> $manifest
-     */
     private function readme(array $manifest): string
     {
         $rows = [];

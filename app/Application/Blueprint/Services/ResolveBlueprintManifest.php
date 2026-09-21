@@ -10,10 +10,6 @@ final readonly class ResolveBlueprintManifest
 {
     public function __construct(private BlueprintCatalog $catalog) {}
 
-    /**
-     * @param array<string, mixed> $manifest
-     * @return array<string, mixed>
-     */
     public function handle(array $manifest): array
     {
         $catalog = $this->catalog->get();
@@ -73,9 +69,7 @@ final readonly class ResolveBlueprintManifest
                     continue;
                 }
 
-                $selected[$id] = [
-                    'exposure' => $exposure,
-                ];
+                $selected[$id] = ['exposure' => $exposure];
             }
         }
 

@@ -54,7 +54,7 @@ final class BlueprintExportTest extends TestCase
         $openApi = $zip->getFromName('api-prueba/openapi/openapi.yaml');
 
         $this->assertIsString($routes);
-        $this->assertStringContainsString("/v1/products", $routes);
+        $this->assertStringContainsString('/v1/products', $routes);
         $this->assertStringNotContainsString('/v1/customers', $routes);
         $this->assertIsString($manifest);
         $this->assertStringContainsString('products.list', $manifest);
@@ -65,10 +65,6 @@ final class BlueprintExportTest extends TestCase
         @unlink($temporaryFile);
     }
 
-    /**
-     * @param list<array<string, string>> $endpoints
-     * @return array<string, mixed>
-     */
     private function manifest(array $endpoints): array
     {
         return [
