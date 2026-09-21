@@ -11,7 +11,9 @@ final class ArchitectureBoundaryTest extends TestCase
 {
     public function test_domain_and_application_do_not_depend_on_laravel(): void
     {
-        foreach ([app_path('Domain'), app_path('Application')] as $directory) {
+        $root = dirname(__DIR__, 2);
+
+        foreach ([$root.'/app/Domain', $root.'/app/Application'] as $directory) {
             foreach ($this->phpFiles($directory) as $file) {
                 $contents = file_get_contents($file->getPathname());
 
