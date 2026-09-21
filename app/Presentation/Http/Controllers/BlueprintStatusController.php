@@ -11,8 +11,9 @@ final class BlueprintStatusController
         return response()->json([
             'name' => 'ApiBlueprint',
             'status' => 'ok',
+            'message' => 'ApiBlueprint está operativo.',
             'api_version' => 'v1',
-            'blueprint_schema' => '0.1',
+            'blueprint_schema' => '0.2',
         ]);
     }
 }

@@ -1,19 +1,37 @@
-# Blueprint Manifest v0.1
+# Blueprint Manifest v0.2
 
-The manifest is the canonical description of what an exported API is allowed to contain.
+El manifest es la descripción canónica de lo que una API exportada puede contener.
 
-## Baseline rule
+## Regla principal
 
-An endpoint that is not enabled is not exported as part of the solution contract. Hiding an endpoint from documentation is not equivalent to disabling it.
+Un endpoint no seleccionado no forma parte de la solución exportada. Ocultarlo de Swagger no equivale a deshabilitarlo.
 
-Each enabled endpoint records:
+## Validación del lado servidor
 
-- stable endpoint id
-- capability
-- HTTP method
-- route path
-- exposure profile: `public`, `authenticated`, `admin`, or `internal`
+El navegador envía únicamente intención de configuración. Antes de exportar, ApiBlueprint vuelve a validar el manifest y reconstruye `method`, `path`, `capability` y descripciones desde el catálogo canónico. Los valores manipulados por el cliente no se consideran fuente de verdad.
 
-The landing currently exports a `.apiblueprint.json` manifest. A later slice will consume the same manifest to generate the Laravel solution package, route registrations, use-case skeletons, authorization policies, OpenAPI surface and tests.
+Cada endpoint resuelto contiene:
 
-This keeps the UI, generator and documentation anchored to one contract rather than parallel configuration sources.
+- identificador estable;
+- capability técnica y etiqueta visible;
+- resumen en español;
+- método HTTP y ruta canónica;
+- perfil de exposición: `public`, `authenticated`, `admin` o `internal`;
+- indicador `auto_added` cuando fue requerido como dependencia.
+
+## Dependencias
+
+Los perfiles protegidos pueden exigir endpoints de autenticación. También existen dependencias explícitas entre endpoints. El resolvedor agrega las dependencias obligatorias antes de exportar y las registra en `resolution.auto_added` para que nunca aparezcan de forma invisible.
+
+## Exportación
+
+`POST /api/v1/blueprint/export` genera un ZIP Laravel que contiene únicamente la superficie resuelta, incluyendo:
+
+- `.apiblueprint.json`;
+- `routes/api.php`;
+- controladores stub para los endpoints exportados;
+- contrato OpenAPI en español;
+- test de registro de rutas;
+- estructura inicial de Clean Architecture.
+
+Los endpoints generados responden inicialmente con HTTP 501 hasta implementar su caso de uso real.
