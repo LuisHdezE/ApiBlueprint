@@ -8,7 +8,10 @@ use RuntimeException;
 
 final readonly class ResolveBlueprintManifest
 {
-    public function __construct(private BlueprintCatalog $catalog) {}
+    public function __construct(private BlueprintCatalog $catalog)
+    {
+        //
+    }
 
     public function handle(array $manifest): array
     {
