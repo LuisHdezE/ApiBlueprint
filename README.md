@@ -21,6 +21,9 @@ ApiBlueprint es un **diseñador y blueprint reutilizable de APIs Laravel**. Comb
 - `POST /api/v1/blueprint/export`
 - tests funcionales, contractuales y de arquitectura
 - CI con GitHub Actions
+- dependencias Composer bloqueadas para builds reproducibles
+- promoción gobernada a producción mediante `deploy/production`
+- smoke post-deploy de landing, status, SHA y exportación ZIP
 
 ## Regla principal
 
@@ -52,8 +55,11 @@ La documentación evoluciona en los mismos pull requests que la implementación:
 - `docs/product/templates.md`
 - `docs/product/governed-capabilities.md`
 - `docs/delivery/roadmap.md`
+- `docs/delivery/production-deployment.md`
 - `docs/governance/language-policy.md`
 
 ## Producción
 
 Destino canónico: **Eliasworks (`eliasworks.uy`)**.
+
+`main` no despliega automáticamente. Producción se promueve de forma explícita moviendo `deploy/production` a un SHA aprobado de `main`. El mismo mecanismo permite rollback y siempre exige smoke posterior al deployment. La configuración específica del document root y de la URL pública permanece fuera del código mediante variables del repositorio.
