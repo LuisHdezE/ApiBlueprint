@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -66,40 +66,40 @@
 
     <header class="hero">
         <div>
-            <div class="eyebrow">Build only what the contract exposes</div>
-            <h1>Shape the API before the API shapes the project.</h1>
-            <p>Choose a governed template, edit its endpoint surface and export an explicit blueprint manifest. Unselected endpoints do not belong to the exported contract.</p>
+            <div class="eyebrow">Construye únicamente lo que expone el contrato</div>
+            <h1>Diseña la API antes de que la API diseñe tu proyecto.</h1>
+            <p>Elige una plantilla gobernada, edita su superficie de endpoints y exporta un manifest explícito. Los endpoints no seleccionados no pertenecen al contrato exportado.</p>
         </div>
         <aside class="hero-note">
             <div class="stat" id="hero-count">0 endpoints</div>
-            <p>The first executable slice already treats endpoint exposure as product configuration, not Swagger decoration.</p>
+            <p>La exposición de endpoints es configuración del producto, no decoración de Swagger.</p>
         </aside>
     </header>
 
-    <div class="section-title"><h2>1. Choose a starting template</h2><p>Every template stays editable.</p></div>
-    <section id="templates" class="templates"><div class="loading">Loading blueprint catalog…</div></section>
+    <div class="section-title"><h2>1. Elige una plantilla inicial</h2><p>Todas las plantillas permanecen editables.</p></div>
+    <section id="templates" class="templates"><div class="loading">Cargando catálogo del blueprint…</div></section>
 
-    <div class="section-title"><h2>2. Edit the exported surface</h2><p>Enable endpoints and choose their exposure profile.</p></div>
+    <div class="section-title"><h2>2. Edita la superficie exportada</h2><p>Habilita endpoints y define su perfil de exposición.</p></div>
     <section class="workspace">
         <aside class="panel">
-            <label class="meta" for="project-name">Project name</label>
-            <input id="project-name" type="text" value="my-api" autocomplete="off">
+            <label class="meta" for="project-name">Nombre del proyecto</label>
+            <input id="project-name" type="text" value="mi-api" autocomplete="off">
 
-            <label class="meta">Selected template</label>
+            <label class="meta">Plantilla seleccionada</label>
             <div id="selected-template">—</div>
 
             <div class="summary">
-                <div><b id="enabled-count">0</b><span>enabled</span></div>
-                <div><b id="capability-count">0</b><span>capabilities</span></div>
+                <div><b id="enabled-count">0</b><span>habilitados</span></div>
+                <div><b id="capability-count">0</b><span>capacidades</span></div>
             </div>
 
-            <button id="export" class="export" type="button">Export solution manifest</button>
-            <p class="footnote">Baseline export produces the canonical <code>.apiblueprint.json</code> contract. Code-generation/ZIP export will consume this same contract in the next delivery slice.</p>
+            <button id="export" class="export" type="button">Exportar manifest</button>
+            <p class="footnote">Este manifest será validado por el backend y servirá como única fuente de verdad para generar la solución Laravel.</p>
         </aside>
 
         <div class="panel">
-            <div class="endpoint-head"><span></span><span>Method</span><span>Endpoint</span><span>Exposure</span></div>
-            <div id="endpoints"><div class="loading">Choose a template to begin.</div></div>
+            <div class="endpoint-head"><span></span><span>Método</span><span>Endpoint</span><span>Exposición</span></div>
+            <div id="endpoints"><div class="loading">Elige una plantilla para comenzar.</div></div>
         </div>
     </section>
 </div>
@@ -142,9 +142,9 @@
         endpointsEl.innerHTML = state.catalog.endpoints.map(endpoint => {
             const selection = state.selected.get(endpoint.id);
             return `<div class="endpoint ${selection.enabled ? '' : 'off'}" data-row="${escapeHtml(endpoint.id)}">
-                <input class="toggle" type="checkbox" data-toggle="${escapeHtml(endpoint.id)}" ${selection.enabled ? 'checked' : ''} aria-label="Enable ${escapeHtml(endpoint.id)}">
+                <input class="toggle" type="checkbox" data-toggle="${escapeHtml(endpoint.id)}" ${selection.enabled ? 'checked' : ''} aria-label="Habilitar ${escapeHtml(endpoint.summary)}">
                 <span class="method">${escapeHtml(endpoint.method)}</span>
-                <span class="path"><code>${escapeHtml(endpoint.path)}</code><small>${escapeHtml(endpoint.capability)}</small></span>
+                <span class="path"><code>${escapeHtml(endpoint.path)}</code><small>${escapeHtml(endpoint.summary)} · ${escapeHtml(endpoint.capability_label)}</small></span>
                 <select data-exposure="${escapeHtml(endpoint.id)}" ${selection.enabled ? '' : 'disabled'}>
                     ${state.catalog.exposures.map(exposure => `<option value="${escapeHtml(exposure.id)}" ${selection.exposure === exposure.id ? 'selected' : ''}>${escapeHtml(exposure.label)}</option>`).join('')}
                 </select>
@@ -166,7 +166,7 @@
     function renderSummary() {
         const enabled = state.catalog.endpoints.filter(endpoint => state.selected.get(endpoint.id)?.enabled);
         const capabilities = new Set(enabled.map(endpoint => endpoint.capability));
-        selectedTemplateEl.textContent = state.template?.name ?? 'Custom';
+        selectedTemplateEl.textContent = state.template?.name ?? 'Personalizada';
         enabledCountEl.textContent = enabled.length;
         capabilityCountEl.textContent = capabilities.size;
         heroCountEl.textContent = `${enabled.length} endpoint${enabled.length === 1 ? '' : 's'}`;
@@ -179,7 +179,7 @@
     }
 
     function exportManifest() {
-        const projectName = document.getElementById('project-name').value.trim() || 'my-api';
+        const projectName = document.getElementById('project-name').value.trim() || 'mi-api';
         const endpoints = state.catalog.endpoints
             .filter(endpoint => state.selected.get(endpoint.id)?.enabled)
             .map(endpoint => ({
@@ -211,7 +211,7 @@
 
     fetch('/api/v1/blueprint/catalog', { headers: { Accept: 'application/json' } })
         .then(response => {
-            if (!response.ok) throw new Error(`Catalog request failed: ${response.status}`);
+            if (!response.ok) throw new Error(`No se pudo cargar el catálogo: ${response.status}`);
             return response.json();
         })
         .then(catalog => {
@@ -219,8 +219,8 @@
             applyTemplate(catalog.templates.find(template => template.id === 'saas') ?? catalog.templates[0]);
         })
         .catch(error => {
-            templatesEl.innerHTML = `<div class="loading">Unable to load catalog: ${escapeHtml(error.message)}</div>`;
-            endpointsEl.innerHTML = '<div class="loading">The API catalog is unavailable.</div>';
+            templatesEl.innerHTML = `<div class="loading">No se pudo cargar el catálogo: ${escapeHtml(error.message)}</div>`;
+            endpointsEl.innerHTML = '<div class="loading">El catálogo de la API no está disponible.</div>';
         });
 })();
 </script>

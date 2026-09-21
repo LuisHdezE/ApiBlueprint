@@ -1,28 +1,28 @@
 # ApiBlueprint
 
-ApiBlueprint is a reusable **Laravel API designer and solution blueprint**. It combines Clean Architecture, editable starter templates, explicit endpoint exposure and an exportable contract that will drive generated Laravel solutions.
+ApiBlueprint es un **diseñador y blueprint reutilizable de APIs Laravel**. Combina Clean Architecture, plantillas editables, exposición explícita de endpoints y un contrato exportable que gobierna las soluciones Laravel generadas.
 
-## Current executable baseline
+## Baseline ejecutable
 
 - Laravel 13 (`PHP >= 8.3`)
-- Clean Architecture folders and dependency rule
-- landing-page API configurator
-- editable Blank, REST CRUD, SaaS and Commerce templates
-- endpoint enable/disable controls
-- exposure profiles: Public, Authenticated, Admin, Internal
-- `.apiblueprint.json` manifest export
+- límites de Clean Architecture y test de dependencias
+- landing/configurador de API
+- plantillas editables: API en blanco, REST CRUD, SaaS y Comercio
+- activación/desactivación individual de endpoints
+- perfiles de exposición: Público, Autenticado, Administrador e Interno
+- contrato `.apiblueprint.json`
 - `GET /api/v1/meta/status`
 - `GET /api/v1/blueprint/catalog`
-- feature + architecture tests
-- GitHub Actions CI
+- tests funcionales y de arquitectura
+- CI con GitHub Actions
 
-## Core rule
+## Regla principal
 
-> If an endpoint is not selected by the blueprint, it must not become part of the generated solution contract.
+> Si un endpoint no está seleccionado por el blueprint, no debe formar parte del contrato ni de la solución generada.
 
-The generator will therefore create only the Laravel routes, presentation adapters, use cases, policies, OpenAPI surface and tests required by the selected manifest.
+El generador crea únicamente las rutas Laravel, adaptadores de presentación, casos de uso, políticas, superficie OpenAPI y tests requeridos por el manifest seleccionado.
 
-## Architecture
+## Arquitectura
 
 ```text
 Presentation  --->  Application  <---  Infrastructure
@@ -31,17 +31,22 @@ Presentation  --->  Application  <---  Infrastructure
                        Domain
 ```
 
-Domain and Application are framework-independent. Laravel belongs at the outer boundaries.
+Domain y Application son independientes de Laravel. El framework vive en los bordes exteriores.
 
-## Living documentation
+## Convención de idioma
 
-Documentation evolves in the same pull requests as implementation:
+El código y los identificadores técnicos se escriben en inglés. La landing, las respuestas visibles, las validaciones, Swagger/OpenAPI y la documentación orientada al consumidor se presentan en español. Ver `docs/governance/language-policy.md`.
+
+## Documentación viva
+
+La documentación evoluciona en los mismos pull requests que la implementación:
 
 - `docs/architecture/clean-architecture.md`
 - `docs/product/blueprint-manifest.md`
 - `docs/product/templates.md`
 - `docs/delivery/roadmap.md`
+- `docs/governance/language-policy.md`
 
-## Production
+## Producción
 
-Canonical delivery target: **Eliasworks (`eliasworks.uy`)**.
+Destino canónico: **Eliasworks (`eliasworks.uy`)**.
