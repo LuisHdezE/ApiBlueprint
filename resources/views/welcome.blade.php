@@ -31,14 +31,21 @@
         .template.active { border:2px solid #2563eb; box-shadow:0 0 0 4px rgba(37,99,235,.08); }
         .template strong { display:block; margin-bottom:8px; color:#17243a; }
         .template span { display:block; color:#708097; font-size:13px; line-height:1.55; }
-        .workspace { display:grid; grid-template-columns:300px 1fr; gap:18px; margin-top:18px; }
+        .workspace { display:grid; grid-template-columns:330px 1fr; gap:18px; margin-top:18px; }
         .panel { background:white; border:1px solid #dfe6ef; border-radius:22px; padding:20px; box-shadow:0 14px 40px rgba(29,53,87,.05); }
         label.meta { display:block; font-size:11px; text-transform:uppercase; font-weight:900; letter-spacing:.1em; color:#7b8798; margin:18px 0 8px; }
-        input[type=text],select { width:100%; border:1px solid #d9e2ed; background:#fbfcfe; border-radius:12px; padding:11px 12px; color:#243249; }
+        input[type=text],input[type=number],select { width:100%; border:1px solid #d9e2ed; background:#fbfcfe; border-radius:12px; padding:11px 12px; color:#243249; }
         .summary { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
         .summary div { background:#f5f8fc; border-radius:14px; padding:13px; }
         .summary b { display:block; font-size:21px; }
         .summary span { font-size:11px; color:#718096; }
+        .governance { margin-top:18px; padding-top:2px; border-top:1px solid #edf1f6; }
+        .governance-grid { display:grid; gap:9px; margin-top:10px; }
+        .switch-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 11px; background:#f7f9fc; border-radius:12px; font-size:12px; color:#45556d; }
+        .switch-row input { width:18px; height:18px; accent-color:#2563eb; }
+        .inline-fields { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .inline-fields label { font-size:11px; color:#7b8798; }
+        .inline-fields input { margin-top:5px; }
         .export { width:100%; margin-top:18px; border:0; border-radius:14px; padding:13px 16px; background:#2563eb; color:#fff; font-weight:850; cursor:pointer; }
         .export:hover { background:#1d4ed8; }
         .export:disabled { opacity:.55; cursor:wait; }
@@ -69,20 +76,20 @@
 
     <header class="hero">
         <div>
-            <div class="eyebrow">Construye únicamente lo que expone el contrato</div>
+            <div class="eyebrow">Contrato, seguridad e infraestructura desde el mismo blueprint</div>
             <h1>Diseña la API antes de que la API diseñe tu proyecto.</h1>
-            <p>Elige una plantilla gobernada, edita su superficie de endpoints y exporta una solución Laravel coherente. Los endpoints no seleccionados no pertenecen al paquete generado.</p>
+            <p>Elige una plantilla, edita endpoints y gobierna las capacidades transversales. La solución exportada contiene solamente la superficie y la infraestructura que el manifest resuelto exige.</p>
         </div>
         <aside class="hero-note">
             <div class="stat" id="hero-count">0 endpoints</div>
-            <p>ApiBlueprint resuelve dependencias antes de exportar y deja visible cualquier endpoint añadido obligatoriamente.</p>
+            <p>Autenticación, RBAC, correlación, rate limiting, idempotencia y auditoría se convierten en código exportado, no en simples preferencias visuales.</p>
         </aside>
     </header>
 
     <div class="section-title"><h2>1. Elige una plantilla inicial</h2><p>Todas las plantillas permanecen editables.</p></div>
     <section id="templates" class="templates"><div class="loading">Cargando catálogo del blueprint…</div></section>
 
-    <div class="section-title"><h2>2. Edita la superficie exportada</h2><p>Habilita endpoints y define su perfil de exposición.</p></div>
+    <div class="section-title"><h2>2. Edita la superficie y su gobierno</h2><p>Endpoints, exposición y capacidades transversales forman un único contrato.</p></div>
     <section class="workspace">
         <aside class="panel">
             <label class="meta" for="project-name">Nombre del proyecto</label>
@@ -96,9 +103,33 @@
                 <div><b id="capability-count">0</b><span>capacidades</span></div>
             </div>
 
+            <div class="governance">
+                <label class="meta" for="authentication">Autenticación</label>
+                <select id="authentication"></select>
+
+                <label class="meta" for="pagination-strategy">Paginación</label>
+                <select id="pagination-strategy"></select>
+                <div class="inline-fields">
+                    <label>Por defecto<input id="pagination-default" type="number" min="1" max="500"></label>
+                    <label>Máximo<input id="pagination-max" type="number" min="1" max="500"></label>
+                </div>
+
+                <label class="meta">Capacidades transversales</label>
+                <div class="governance-grid">
+                    <label class="switch-row"><span>RBAC</span><input id="rbac" type="checkbox"></label>
+                    <label class="switch-row"><span>Correlation ID</span><input id="correlation-id" type="checkbox"></label>
+                    <label class="switch-row"><span>Rate limiting</span><input id="rate-limiting" type="checkbox"></label>
+                    <div class="inline-fields"><label>Solicitudes/minuto<input id="rate-limit" type="number" min="1" max="1000"></label></div>
+                    <label class="switch-row"><span>Filtrado estándar</span><input id="filtering" type="checkbox"></label>
+                    <label class="switch-row"><span>Ordenamiento estándar</span><input id="sorting" type="checkbox"></label>
+                    <label class="switch-row"><span>Idempotencia</span><input id="idempotency" type="checkbox"></label>
+                    <label class="switch-row"><span>Auditoría</span><input id="audit" type="checkbox"></label>
+                </div>
+            </div>
+
             <button id="export" class="export" type="button">Exportar solución ZIP</button>
             <div id="notice" class="notice" hidden></div>
-            <p class="footnote">El backend valida el manifest, reconstruye rutas y métodos desde el catálogo canónico y agrega dependencias obligatorias antes de generar el ZIP.</p>
+            <p class="footnote">El backend canonicaliza el manifest y valida dependencias entre exposición, autenticación y RBAC antes de generar el paquete.</p>
         </aside>
 
         <div class="panel">
@@ -110,7 +141,7 @@
 
 <script>
 (() => {
-    const state = { catalog: null, template: null, selected: new Map() };
+    const state = { catalog: null, template: null, selected: new Map(), governance: null };
     const templatesEl = document.getElementById('templates');
     const endpointsEl = document.getElementById('endpoints');
     const selectedTemplateEl = document.getElementById('selected-template');
@@ -119,8 +150,11 @@
     const heroCountEl = document.getElementById('hero-count');
     const exportButton = document.getElementById('export');
     const noticeEl = document.getElementById('notice');
+    const authenticationEl = document.getElementById('authentication');
+    const paginationStrategyEl = document.getElementById('pagination-strategy');
 
     const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[char]));
+    const clone = value => JSON.parse(JSON.stringify(value));
 
     function showNotice(message, isError = false) {
         noticeEl.hidden = false;
@@ -135,6 +169,7 @@
             enabled: enabled.has(endpoint.id),
             exposure: endpoint.default_exposure,
         }]));
+        state.governance = clone(state.catalog.governance.defaults);
         noticeEl.hidden = true;
         render();
     }
@@ -177,6 +212,47 @@
         });
     }
 
+    function renderGovernance() {
+        authenticationEl.innerHTML = state.catalog.governance.authentication_strategies
+            .map(strategy => `<option value="${escapeHtml(strategy.id)}">${escapeHtml(strategy.label)}</option>`).join('');
+        paginationStrategyEl.innerHTML = state.catalog.governance.pagination_strategies
+            .map(strategy => `<option value="${escapeHtml(strategy.id)}">${escapeHtml(strategy.label)}</option>`).join('');
+
+        authenticationEl.value = state.governance.authentication;
+        paginationStrategyEl.value = state.governance.pagination.strategy;
+        document.getElementById('pagination-default').value = state.governance.pagination.default_size;
+        document.getElementById('pagination-max').value = state.governance.pagination.max_size;
+        document.getElementById('rbac').checked = state.governance.rbac;
+        document.getElementById('correlation-id').checked = state.governance.correlation_id;
+        document.getElementById('rate-limiting').checked = state.governance.rate_limiting.enabled;
+        document.getElementById('rate-limit').value = state.governance.rate_limiting.requests_per_minute;
+        document.getElementById('filtering').checked = state.governance.filtering;
+        document.getElementById('sorting').checked = state.governance.sorting;
+        document.getElementById('idempotency').checked = state.governance.idempotency;
+        document.getElementById('audit').checked = state.governance.audit;
+    }
+
+    function readGovernance() {
+        state.governance = {
+            authentication: authenticationEl.value,
+            rbac: document.getElementById('rbac').checked,
+            correlation_id: document.getElementById('correlation-id').checked,
+            rate_limiting: {
+                enabled: document.getElementById('rate-limiting').checked,
+                requests_per_minute: Number(document.getElementById('rate-limit').value),
+            },
+            pagination: {
+                strategy: paginationStrategyEl.value,
+                default_size: Number(document.getElementById('pagination-default').value),
+                max_size: Number(document.getElementById('pagination-max').value),
+            },
+            filtering: document.getElementById('filtering').checked,
+            sorting: document.getElementById('sorting').checked,
+            idempotency: document.getElementById('idempotency').checked,
+            audit: document.getElementById('audit').checked,
+        };
+    }
+
     function renderSummary() {
         const enabled = state.catalog.endpoints.filter(endpoint => state.selected.get(endpoint.id)?.enabled);
         const capabilities = new Set(enabled.map(endpoint => endpoint.capability));
@@ -189,10 +265,12 @@
     function render() {
         renderTemplates();
         renderEndpoints();
+        renderGovernance();
         renderSummary();
     }
 
     function buildManifest() {
+        readGovernance();
         const projectName = document.getElementById('project-name').value.trim() || 'mi-api';
         const endpoints = state.catalog.endpoints
             .filter(endpoint => state.selected.get(endpoint.id)?.enabled)
@@ -206,6 +284,7 @@
             generator: 'ApiBlueprint',
             project: { name: projectName, api_version: state.catalog.api_version },
             template: state.template?.id ?? 'custom',
+            governance: state.governance,
             endpoints,
         };
     }
@@ -236,15 +315,16 @@
             if (resolvedEndpoint) selection.exposure = resolvedEndpoint.exposure;
         });
 
+        state.governance = clone(resolved.governance);
         renderEndpoints();
+        renderGovernance();
         renderSummary();
 
+        const messages = [];
         const autoAdded = resolved.resolution.auto_added.map(item => item.id);
-        if (autoAdded.length > 0) {
-            showNotice(`Dependencias añadidas automáticamente: ${autoAdded.join(', ')}. La selección visible ya coincide con lo que se exportará.`);
-        } else {
-            showNotice('Configuración validada. No fue necesario añadir dependencias.');
-        }
+        if (autoAdded.length > 0) messages.push(`Dependencias añadidas: ${autoAdded.join(', ')}.`);
+        if (resolved.resolution.governance_adjustments.length > 0) messages.push('Se ajustaron capacidades transversales requeridas por la superficie.');
+        showNotice(messages.join(' ') || 'Configuración validada. La selección visible coincide con lo que se exportará.');
     }
 
     async function exportSolution() {
@@ -276,7 +356,7 @@
             anchor.download = `${projectName}.zip`;
             anchor.click();
             URL.revokeObjectURL(url);
-            showNotice('Solución generada correctamente. El ZIP contiene el manifest resuelto, las rutas seleccionadas, OpenAPI en español y sus tests contractuales.');
+            showNotice('Solución generada. El ZIP contiene endpoints, gobierno transversal, OpenAPI en español y pruebas contractuales derivados del mismo manifest.');
         } catch (error) {
             showNotice(error.message || 'Ocurrió un error al exportar la solución.', true);
         } finally {
