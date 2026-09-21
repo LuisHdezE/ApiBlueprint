@@ -10,17 +10,23 @@ ApiBlueprint es un **diseñador y blueprint reutilizable de APIs Laravel**. Comb
 - plantillas editables: API en blanco, REST CRUD, SaaS y Comercio
 - activación/desactivación individual de endpoints
 - perfiles de exposición: Público, Autenticado, Administrador e Interno
-- contrato `.apiblueprint.json`
+- manifest v0.3 con gobierno transversal
+- Problem Details RFC 9457 y Correlation ID
+- selección de Laravel Sanctum, RBAC y rate limiting
+- contratos de paginación, filtrado y ordenamiento
+- base de idempotencia y auditoría exportables
 - `GET /api/v1/meta/status`
 - `GET /api/v1/blueprint/catalog`
-- tests funcionales y de arquitectura
+- `POST /api/v1/blueprint/resolve`
+- `POST /api/v1/blueprint/export`
+- tests funcionales, contractuales y de arquitectura
 - CI con GitHub Actions
 
 ## Regla principal
 
-> Si un endpoint no está seleccionado por el blueprint, no debe formar parte del contrato ni de la solución generada.
+> Si un endpoint o una capacidad transversal no están seleccionados por el blueprint, no deben aparecer como infraestructura dormida en la solución generada.
 
-El generador crea únicamente las rutas Laravel, adaptadores de presentación, casos de uso, políticas, superficie OpenAPI y tests requeridos por el manifest seleccionado.
+El generador crea rutas, adaptadores de presentación, gobierno transversal, OpenAPI y pruebas requeridas por el manifest seleccionado.
 
 ## Arquitectura
 
@@ -44,6 +50,7 @@ La documentación evoluciona en los mismos pull requests que la implementación:
 - `docs/architecture/clean-architecture.md`
 - `docs/product/blueprint-manifest.md`
 - `docs/product/templates.md`
+- `docs/product/governed-capabilities.md`
 - `docs/delivery/roadmap.md`
 - `docs/governance/language-policy.md`
 
