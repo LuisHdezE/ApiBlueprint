@@ -74,7 +74,7 @@ U0.5 cerró con PR #5 y CI post-merge verde. Los vertical slices ejecutables se 
 
 El objetivo es sustituir progresivamente los stubs HTTP 501 por implementaciones completas sin convertir el proyecto exportado en un megaprojecto dormido.
 
-Primer checkpoint: `products.show`.
+### Checkpoint 1: `products.show` ✅
 
 - `Product` en Domain sin dependencia de Laravel;
 - `ProductReadRepository` y `GetProduct` en Application;
@@ -84,10 +84,29 @@ Primer checkpoint: `products.show`.
 - respuesta 200 con recurso y 404 mediante Problem Details en español;
 - OpenAPI 200/404 y schema `Product`;
 - test generado con SQLite en memoria y `RefreshDatabase`;
-- README exportado con estado de implementación y `php artisan migrate`;
-- ausencia de `products.list` y de infraestructura de paginación cuando no fueron seleccionados.
+- ausencia de infraestructura de listado cuando no fue seleccionada.
 
-`products.list` permanece separado hasta implementar correctamente cursor/offset, filtering y sorting. Los demás endpoints siguen respondiendo 501 hasta recibir su propia receta ejecutable.
+Checkpoint integrado por PR #6 con CI pre-merge y post-merge verdes.
+
+### Checkpoint 2: `products.list` 🚧
+
+- `ProductListRepository`, `ProductPage` y `ListProducts` en Application;
+- `DatabaseProductListRepository` en Infrastructure;
+- `ProductsListController` y `ProductListQueryValidator` en Presentation;
+- cursor keyset real, no offset codificado como cursor;
+- estrategia offset con `page[number]`, `total` y `total_pages`;
+- `page[size]` limitado por la gobernanza del manifest;
+- filtros permitidos `id` y `name`;
+- sorting determinista por `id`/`name`, con `id` como desempate estable;
+- 422 RFC 9457 para parámetros inválidos y cursores incompatibles;
+- OpenAPI 200/422, `ProductListMeta` y parámetros específicos por estrategia;
+- tests generados para cursor, offset, filtering, sorting y validación;
+- acceptance Commerce ejecutado en cursor y offset;
+- ausencia de infraestructura `products.show` cuando solo se selecciona el listado.
+
+Este checkpoint permanece abierto hasta obtener CI verde completo y merge aprobado.
+
+Los demás endpoints siguen respondiendo 501 hasta recibir su propia receta ejecutable.
 
 Ver `docs/delivery/executable-vertical-slices.md`.
 

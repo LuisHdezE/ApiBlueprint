@@ -12,13 +12,15 @@ cases=(
   "crud:offset-no-rate"
   "saas:default"
   "commerce:default"
+  "commerce:offset-no-rate"
 )
 
 for acceptance_case in "${cases[@]}"; do
   template="${acceptance_case%%:*}"
   profile="${acceptance_case##*:}"
-  archive="$WORK_DIR/${template}.zip"
-  extract_dir="$WORK_DIR/${template}"
+  case_id="${template}-${profile}"
+  archive="$WORK_DIR/${case_id}.zip"
+  extract_dir="$WORK_DIR/${case_id}"
 
   echo "================================================="
   echo " Generated solution acceptance: ${template} (${profile})"
