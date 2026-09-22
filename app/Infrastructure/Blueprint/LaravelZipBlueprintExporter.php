@@ -137,6 +137,7 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             'name' => 'generated/'.$this->slug((string) $manifest['project']['name']),
             'type' => 'project',
             'description' => 'API Laravel generada por ApiBlueprint.',
+            'license' => 'proprietary',
             'require' => $require,
             'require-dev' => [
                 'laravel/pint' => '^1.27',
