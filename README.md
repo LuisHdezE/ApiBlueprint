@@ -23,6 +23,8 @@ ApiBlueprint es un **diseñador y blueprint reutilizable de APIs Laravel**. Comb
 - CI con GitHub Actions
 - aceptación ejecutable de los ZIP generados para Blank, CRUD, SaaS y Commerce
 - validación semántica de OpenAPI generado, Composer, Pint, tests y rutas
+- primer vertical slice ejecutable para `products.show`, con Domain, Application, Infrastructure y Presentation
+- persistencia SQLite y tests en memoria generados únicamente cuando `products.show` está seleccionado
 - dependencias Composer del repositorio bloqueadas para builds reproducibles
 - promoción gobernada a producción mediante `deploy/production`
 - smoke post-deploy de landing, status, SHA y exportación ZIP
@@ -31,7 +33,7 @@ ApiBlueprint es un **diseñador y blueprint reutilizable de APIs Laravel**. Comb
 
 > Si un endpoint o una capacidad transversal no están seleccionados por el blueprint, no deben aparecer como infraestructura dormida en la solución generada.
 
-El generador crea rutas, adaptadores de presentación, gobierno transversal, OpenAPI y pruebas requeridas por el manifest seleccionado.
+El generador crea rutas, adaptadores de presentación, gobierno transversal, OpenAPI y pruebas requeridas por el manifest seleccionado. Los endpoints con receta ejecutable generan además sus capas de dominio, aplicación e infraestructura; los demás conservan su stub 501 hasta recibir una implementación gobernada.
 
 ## Arquitectura
 
@@ -59,6 +61,7 @@ La documentación evoluciona en los mismos pull requests que la implementación:
 - `docs/delivery/roadmap.md`
 - `docs/delivery/production-deployment.md`
 - `docs/delivery/generated-solution-acceptance.md`
+- `docs/delivery/executable-vertical-slices.md`
 - `docs/governance/language-policy.md`
 
 ## Producción
