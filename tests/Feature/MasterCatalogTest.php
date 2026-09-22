@@ -63,11 +63,12 @@ final class MasterCatalogTest extends TestCase
         $response = $this->getJson('/api/v1/blueprint/openapi')
             ->assertOk()
             ->assertJsonPath('openapi', '3.1.0')
-            ->assertJsonPath('info.title', 'ApiBlueprint · Master Feature Library')
-            ->assertJsonPath('paths./api~1v1~1products.get.x-apiblueprint-feature-id', 'products.list')
-            ->assertJsonPath('paths./api~1v1~1products~1{id}.get.x-apiblueprint-feature-id', 'products.show');
+            ->assertJsonPath('info.title', 'ApiBlueprint · Master Feature Library');
 
         $paths = $response->json('paths');
+
+        $this->assertSame('products.list', $paths['/api/v1/products']['get']['x-apiblueprint-feature-id']);
+        $this->assertSame('products.show', $paths['/api/v1/products/{id}']['get']['x-apiblueprint-feature-id']);
         $this->assertArrayNotHasKey('/api/v1/auth/login', $paths);
         $this->assertCount(2, $paths);
     }
