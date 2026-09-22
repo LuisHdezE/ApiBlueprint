@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -58,9 +59,30 @@ def main() -> int:
     if not isinstance(paths, dict):
         fail("Generated OpenAPI paths must be a mapping.")
 
-    expected_paths = {endpoint["path"] for endpoint in manifest["endpoints"]}
-    if set(paths.keys()) != expected_paths:
-        fail(f"OpenAPI paths do not match manifest. Expected {sorted(expected_paths)}, got {sorted(paths.keys())}.")
+    expected_operations: dict[str, set[str]] = {}
+    for endpoint in manifest["endpoints"]:
+        expected_operations.setdefault(endpoint["path"], set()).add(endpoint["method"].lower())
+
+    if set(paths.keys()) != set(expected_operations.keys()):
+        fail(
+            "OpenAPI paths do not match manifest. "
+            f"Expected {sorted(expected_operations.keys())}, got {sorted(paths.keys())}."
+        )
+
+    for path, path_item in paths.items():
+        if not isinstance(path_item, dict):
+            fail(f"OpenAPI path item for {path} must be a mapping.")
+
+        actual_methods = {
+            key
+            for key in path_item.keys()
+            if key in {"get", "post", "put", "patch", "delete", "options", "head", "trace"}
+        }
+        if actual_methods != expected_operations[path]:
+            fail(
+                f"OpenAPI operations for {path} do not match manifest. "
+                f"Expected {sorted(expected_operations[path])}, got {sorted(actual_methods)}."
+            )
 
     governance = manifest["governance"]
     rate_limiting_enabled = governance["rate_limiting"]["enabled"]
@@ -95,16 +117,30 @@ def main() -> int:
             if security != [{"bearerAuth": []}]:
                 fail(f"Protected endpoint {endpoint['id']} must document bearerAuth.")
 
+        raw_parameters = operation.get("parameters", [])
+        if not isinstance(raw_parameters, list):
+            fail(f"Parameters for {endpoint['id']} must be a list.")
+
+        by_name = {
+            parameter.get("name"): parameter
+            for parameter in raw_parameters
+            if isinstance(parameter, dict) and isinstance(parameter.get("name"), str)
+        }
+
+        for placeholder in re.findall(r"\{([^}]+)\}", path):
+            parameter = by_name.get(placeholder)
+            if not isinstance(parameter, dict):
+                fail(f"Path parameter {placeholder} is missing for {endpoint['id']}.")
+            if parameter.get("in") != "path" or parameter.get("required") is not True:
+                fail(f"Path parameter {placeholder} for {endpoint['id']} must be required and in path.")
+            schema = parameter.get("schema", {})
+            if not isinstance(schema, dict) or schema.get("type") != "string":
+                fail(f"Path parameter {placeholder} for {endpoint['id']} must use a string schema.")
+
         if endpoint["id"].endswith(".list"):
-            parameters = operation.get("parameters")
-            if not isinstance(parameters, list):
+            if not raw_parameters:
                 fail(f"List endpoint {endpoint['id']} must document query parameters.")
 
-            by_name = {
-                parameter.get("name"): parameter
-                for parameter in parameters
-                if isinstance(parameter, dict) and isinstance(parameter.get("name"), str)
-            }
             page_key = "page[cursor]" if pagination_strategy == "cursor" else "page[number]"
             if page_key not in by_name:
                 fail(f"List endpoint {endpoint['id']} is missing {page_key}.")
