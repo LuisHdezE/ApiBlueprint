@@ -1,0 +1,39 @@
+name: U0.5 Exporter Patch
+
+on:
+  push:
+    branches: [feature/u0-5-generated-solution-acceptance]
+    paths:
+      - .github/workflows/u0-5-exporter-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feature/u0-5-generated-solution-acceptance
+
+      - name: Apply exporter fixes
+        run: python3 scripts/apply-u0-5-exporter-fixes.py
+
+      - name: Commit exporter fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff --exit-code -- app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php && {
+            echo "Exporter already contains the expected fixes."
+            exit 0
+          }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php
+          git commit -m "fix: make generated solutions acceptance-ready"
+          git push origin HEAD:feature/u0-5-generated-solution-acceptance
