@@ -28,6 +28,7 @@ final class GeneratedProductVerticalSliceExportTest extends TestCase
         $migration = $zip->getFromName('product-api/database/migrations/2026_01_01_000000_create_products_table.php');
         $provider = $zip->getFromName('product-api/app/Providers/AppServiceProvider.php');
         $verticalSliceTest = $zip->getFromName('product-api/tests/Feature/ProductsShowVerticalSliceTest.php');
+        $composer = $zip->getFromName('product-api/composer.json');
         $openApi = $zip->getFromName('product-api/openapi/openapi.yaml');
         $phpunit = $zip->getFromName('product-api/phpunit.xml');
         $readme = $zip->getFromName('product-api/README.md');
@@ -52,6 +53,9 @@ final class GeneratedProductVerticalSliceExportTest extends TestCase
         $this->assertStringContainsString('ProductReadRepository::class, DatabaseProductReadRepository::class', $provider);
         $this->assertIsString($verticalSliceTest);
         $this->assertStringContainsString('RefreshDatabase', $verticalSliceTest);
+        $this->assertIsString($composer);
+        $composerData = json_decode($composer, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('^1.6', $composerData['require-dev']['mockery/mockery'] ?? null);
 
         $this->assertIsString($openApi);
         $this->assertStringContainsString("'200':", $openApi);
