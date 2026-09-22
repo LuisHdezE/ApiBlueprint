@@ -53,7 +53,16 @@ for acceptance_case in "${cases[@]}"; do
 
     vendor/bin/pint --test
     php artisan test
-    php artisan route:list --path=api/v1
+
+    if [[ "$template" == "blank" ]]; then
+      if grep -q 'Route::' routes/api.php; then
+        echo "Blank template unexpectedly contains API routes." >&2
+        exit 1
+      fi
+      php artisan route:list
+    else
+      php artisan route:list --path=api/v1
+    fi
   )
 
 done
