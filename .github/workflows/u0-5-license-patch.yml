@@ -1,0 +1,47 @@
+name: U0.5 Composer Metadata Patch
+
+on:
+  push:
+    branches: [feature/u0-5-generated-solution-acceptance]
+    paths:
+      - .github/workflows/u0-5-license-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feature/u0-5-generated-solution-acceptance
+
+      - name: Add generated Composer license metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php')
+          text = path.read_text(encoding='utf-8')
+          needle = "            'description' => 'API Laravel generada por ApiBlueprint.',\n            'require' => $require,"
+          replacement = "            'description' => 'API Laravel generada por ApiBlueprint.',\n            'license' => 'proprietary',\n            'require' => $require,"
+          if text.count(needle) != 1:
+              raise SystemExit('Expected generated composer description block exactly once.')
+          path.write_text(text.replace(needle, replacement, 1), encoding='utf-8')
+          PY
+
+      - name: Commit metadata fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php
+          git commit -m "fix: validate generated Composer metadata strictly"
+          git push origin HEAD:feature/u0-5-generated-solution-acceptance
