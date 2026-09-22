@@ -142,6 +142,16 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             $require['laravel/sanctum'] = '^4.3';
         }
 
+        $requireDev = [
+            'laravel/pint' => '^1.27',
+            'nunomaduro/collision' => '^8.6',
+            'phpunit/phpunit' => '^12.5',
+        ];
+
+        if ($this->hasEndpoint($manifest, 'products.show')) {
+            $requireDev['mockery/mockery'] = '^1.6';
+        }
+
         return json_encode([
             '$schema' => 'https://getcomposer.org/schema.json',
             'name' => 'generated/'.$this->slug((string) $manifest['project']['name']),
@@ -149,11 +159,7 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             'description' => 'API Laravel generada por ApiBlueprint.',
             'license' => 'proprietary',
             'require' => $require,
-            'require-dev' => [
-                'laravel/pint' => '^1.27',
-                'nunomaduro/collision' => '^8.6',
-                'phpunit/phpunit' => '^12.5',
-            ],
+            'require-dev' => $requireDev,
             'autoload' => ['psr-4' => ['App\\' => 'app/']],
             'autoload-dev' => ['psr-4' => ['Tests\\' => 'tests/']],
             'scripts' => [
