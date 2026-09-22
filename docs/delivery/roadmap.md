@@ -36,7 +36,7 @@ Implementación y documentación avanzan juntas. La documentación evidencia el 
 
 ## U0.4 - Entrega continua y runtime público 🚧
 
-Implementación de release preparada en rama y pendiente de merge/promoción productiva:
+La implementación de release ya está mergeada en `main` y el SHA aprobado fue promovido mediante `deploy/production`. El build y la transferencia FTP hacia Eliasworks concluyeron correctamente. El cierre permanece pendiente del smoke público, bloqueado temporalmente por la disponibilidad DNS del subdominio productivo.
 
 - `composer.lock` obligatorio para builds reproducibles;
 - CI rechaza releases sin lock;
@@ -50,7 +50,25 @@ Implementación de release preparada en rama y pendiente de merge/promoción pro
 - rollback mediante la misma referencia de promoción;
 - documentación operacional en `docs/delivery/production-deployment.md`.
 
-U0.4 se considera cerrado únicamente después de mergear su PR, promover un SHA aprobado a `deploy/production` y obtener smoke verde en el runtime público.
+U0.4 se considera cerrado únicamente cuando el runtime público complete el smoke verde. La promoción y transferencia ya realizadas no sustituyen esa evidencia.
+
+## U0.5 - Aceptación de soluciones generadas 🚧
+
+El generador dispone de un gate de aceptación ejecutable en PR que exporta y prueba proyectos Laravel reales antes de permitir su promoción:
+
+- presets Blank, CRUD, SaaS y Commerce;
+- descompresión aislada de cada ZIP;
+- OpenAPI 3.1 parseado semánticamente y sin claves YAML duplicadas;
+- paths y métodos reconciliados contra el manifest;
+- parámetros de path, seguridad, paginación y HTTP 429 gobernados;
+- `composer validate` e instalación real de dependencias;
+- PHP generado limpio para Pint;
+- `php artisan test` dentro de cada solución exportada;
+- smoke de rutas Laravel;
+- Blank sin rutas API seleccionadas;
+- documentación del gate en `docs/delivery/generated-solution-acceptance.md`.
+
+U0.5 se considera cerrado después de que su PR quede verde en el HEAD final, sea revisada y se integre a `main`. Los controladores de negocio 501 permanecen fuera de este cierre y corresponden a una fase posterior de vertical slices ejecutables.
 
 ## Destino de entrega
 

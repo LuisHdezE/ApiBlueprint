@@ -21,7 +21,9 @@ ApiBlueprint es un **diseñador y blueprint reutilizable de APIs Laravel**. Comb
 - `POST /api/v1/blueprint/export`
 - tests funcionales, contractuales y de arquitectura
 - CI con GitHub Actions
-- dependencias Composer bloqueadas para builds reproducibles
+- aceptación ejecutable de los ZIP generados para Blank, CRUD, SaaS y Commerce
+- validación semántica de OpenAPI generado, Composer, Pint, tests y rutas
+- dependencias Composer del repositorio bloqueadas para builds reproducibles
 - promoción gobernada a producción mediante `deploy/production`
 - smoke post-deploy de landing, status, SHA y exportación ZIP
 
@@ -56,6 +58,7 @@ La documentación evoluciona en los mismos pull requests que la implementación:
 - `docs/product/governed-capabilities.md`
 - `docs/delivery/roadmap.md`
 - `docs/delivery/production-deployment.md`
+- `docs/delivery/generated-solution-acceptance.md`
 - `docs/governance/language-policy.md`
 
 ## Producción
