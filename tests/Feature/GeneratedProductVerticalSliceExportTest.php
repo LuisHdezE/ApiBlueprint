@@ -35,7 +35,7 @@ final class GeneratedProductVerticalSliceExportTest extends TestCase
         $this->assertIsString($controller);
         $this->assertStringContainsString('GetProduct', $controller);
         $this->assertStringContainsString('Producto no encontrado', $controller);
-        $this->assertStringNotContainsString('status' => 501, $controller);
+        $this->assertStringNotContainsString("'status' => 501", $controller);
 
         $this->assertIsString($domain);
         $this->assertStringContainsString('final readonly class Product', $domain);
