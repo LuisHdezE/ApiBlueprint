@@ -665,8 +665,8 @@ PHP;
         $governance = $manifest['governance'];
 
         if ($this->hasEndpoint($manifest, 'products.show')) {
-            $imports[] = 'use App\Application\Products\Contracts\ProductReadRepository;';
-            $imports[] = 'use App\Infrastructure\Products\DatabaseProductReadRepository;';
+            $imports[] = 'use App\\Application\\Products\\Contracts\\ProductReadRepository;';
+            $imports[] = 'use App\\Infrastructure\\Products\\DatabaseProductReadRepository;';
             $registerLines[] = '        $this->app->bind(ProductReadRepository::class, DatabaseProductReadRepository::class);';
         }
 
@@ -772,7 +772,7 @@ PHP;
             $assertions = [];
             foreach ($manifest['endpoints'] as $endpoint) {
                 $routeName = 'api.v1.'.$endpoint['id'];
-                $assertions[] = "        \\$this->assertNotNull(app('router')->getRoutes()->getByName('$routeName'));";
+                $assertions[] = "        \$this->assertNotNull(app('router')->getRoutes()->getByName('$routeName'));";
             }
             $assertionText = implode("\n", $assertions);
 
@@ -818,10 +818,10 @@ $dataset
     }
 
     #[DataProvider('endpoints')]
-    public function test_stub_endpoint_is_registered(string \\$method, string \\$path): void
+    public function test_stub_endpoint_is_registered(string \$method, string \$path): void
     {
-        \\$this->withoutMiddleware();
-        \\$this->call(\\$method, \\$path)
+        \$this->withoutMiddleware();
+        \$this->call(\$method, \$path)
             ->assertStatus(501)
             ->assertJsonPath('title', 'Endpoint generado pendiente de implementación');
     }
@@ -1002,7 +1002,7 @@ XML;
         $governance = $manifest['governance'];
         $migrationStep = $this->hasEndpoint($manifest, 'products.show') ? "php artisan migrate\n" : '';
 
-        return "# {$manifest['project']['name']}\n\nSolución Laravel generada por **ApiBlueprint**. El código se mantiene en inglés; mensajes, errores y OpenAPI se presentan en español.\n\n## Gobierno exportado\n\n- Autenticación: `{$governance['authentication']}`\n- RBAC: ".($governance['rbac'] ? 'sí' : 'no')."\n- Correlation ID: ".($governance['correlation_id'] ? 'sí' : 'no')."\n- Rate limit: ".($governance['rate_limiting']['enabled'] ? $governance['rate_limiting']['requests_per_minute'].' solicitudes/minuto' : 'deshabilitado')."\n- Paginación: `{$governance['pagination']['strategy']}`\n- Idempotencia: ".($governance['idempotency'] ? 'sí' : 'no')."\n- Auditoría: ".($governance['audit'] ? 'sí' : 'no')."\n\n## Endpoints exportados\n\n| Método | Ruta | Descripción | Exposición | Implementación |\n| --- | --- | --- | --- | --- |\n$table\n\n## Inicio rápido\n\n```bash\ncomposer install\ncp .env.example .env\nphp artisan key:generate\n$migrationStepphp artisan test\nphp artisan serve\n```\n\n`products.show` se exporta como vertical slice ejecutable cuando está seleccionado. Los demás endpoints conservan HTTP 501 hasta que su receta ejecutable sea incorporada. Los endpoints y capacidades no seleccionados no se incluyen como infraestructura dormida.\n";
+        return "# {$manifest['project']['name']}\n\nSolución Laravel generada por **ApiBlueprint**. El código se mantiene en inglés; mensajes, errores y OpenAPI se presentan en español.\n\n## Gobierno exportado\n\n- Autenticación: `{$governance['authentication']}`\n- RBAC: ".($governance['rbac'] ? 'sí' : 'no')."\n- Correlation ID: ".($governance['correlation_id'] ? 'sí' : 'no')."\n- Rate limit: ".($governance['rate_limiting']['enabled'] ? $governance['rate_limiting']['requests_per_minute'].' solicitudes/minuto' : 'deshabilitado')."\n- Paginación: `{$governance['pagination']['strategy']}`\n- Idempotencia: ".($governance['idempotency'] ? 'sí' : 'no')."\n- Auditoría: ".($governance['audit'] ? 'sí' : 'no')."\n\n## Endpoints exportados\n\n| Método | Ruta | Descripción | Exposición | Implementación |\n| --- | --- | --- | --- | --- |\n$table\n\n## Inicio rápido\n\n```bash\ncomposer install\ncp .env.example .env\nphp artisan key:generate\n{$migrationStep}php artisan test\nphp artisan serve\n```\n\n`products.show` se exporta como vertical slice ejecutable cuando está seleccionado. Los demás endpoints conservan HTTP 501 hasta que su receta ejecutable sea incorporada. Los endpoints y capacidades no seleccionados no se incluyen como infraestructura dormida.\n";
     }
 
     private function controllerClassName(string $endpointId): string
@@ -1037,17 +1037,17 @@ use Illuminate\Http\Request;
 
 final readonly class $className
 {
-    public function __construct(private GetProduct \\$getProduct)
+    public function __construct(private GetProduct \$getProduct)
     {
         //
     }
 
-    public function __invoke(Request \\$request, string \\$id): JsonResponse
+    public function __invoke(Request \$request, string \$id): JsonResponse
     {
-        \\$product = \\$this->getProduct->handle(\\$id);
-        if (\\$product === null) {
+        \$product = \$this->getProduct->handle(\$id);
+        if (\$product === null) {
             return ProblemDetails::response(
-                request: \\$request,
+                request: \$request,
                 status: 404,
                 title: 'Producto no encontrado',
                 detail: 'No existe un producto con el identificador solicitado.',
@@ -1055,7 +1055,7 @@ final readonly class $className
             );
         }
 
-        return response()->json(['data' => \\$product->toArray()]);
+        return response()->json(['data' => \$product->toArray()]);
     }
 }
 PHP;
