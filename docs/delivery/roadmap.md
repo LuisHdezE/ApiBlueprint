@@ -52,9 +52,9 @@ La implementación de release ya está mergeada en `main` y el SHA aprobado fue 
 
 U0.4 se considera cerrado únicamente cuando el runtime público complete el smoke verde. La promoción y transferencia ya realizadas no sustituyen esa evidencia.
 
-## U0.5 - Aceptación de soluciones generadas 🚧
+## U0.5 - Aceptación de soluciones generadas ✅
 
-El generador dispone de un gate de aceptación ejecutable en PR que exporta y prueba proyectos Laravel reales antes de permitir su promoción:
+El gate de aceptación ejecutable está integrado en `main` y exporta y prueba proyectos Laravel reales antes de permitir su promoción:
 
 - presets Blank, CRUD, SaaS y Commerce;
 - descompresión aislada de cada ZIP;
@@ -68,7 +68,28 @@ El generador dispone de un gate de aceptación ejecutable en PR que exporta y pr
 - Blank sin rutas API seleccionadas;
 - documentación del gate en `docs/delivery/generated-solution-acceptance.md`.
 
-U0.5 se considera cerrado después de que su PR quede verde en el HEAD final, sea revisada y se integre a `main`. Los controladores de negocio 501 permanecen fuera de este cierre y corresponden a una fase posterior de vertical slices ejecutables.
+U0.5 cerró con PR #5 y CI post-merge verde. Los vertical slices ejecutables se desarrollan de forma incremental a partir de U0.6.
+
+## U0.6 - Vertical slices ejecutables 🚧
+
+El objetivo es sustituir progresivamente los stubs HTTP 501 por implementaciones completas sin convertir el proyecto exportado en un megaprojecto dormido.
+
+Primer checkpoint: `products.show`.
+
+- `Product` en Domain sin dependencia de Laravel;
+- `ProductReadRepository` y `GetProduct` en Application;
+- `DatabaseProductReadRepository` y migración SQLite en Infrastructure;
+- controlador HTTP real en Presentation;
+- binding del puerto únicamente cuando `products.show` está seleccionado;
+- respuesta 200 con recurso y 404 mediante Problem Details en español;
+- OpenAPI 200/404 y schema `Product`;
+- test generado con SQLite en memoria y `RefreshDatabase`;
+- README exportado con estado de implementación y `php artisan migrate`;
+- ausencia de `products.list` y de infraestructura de paginación cuando no fueron seleccionados.
+
+`products.list` permanece separado hasta implementar correctamente cursor/offset, filtering y sorting. Los demás endpoints siguen respondiendo 501 hasta recibir su propia receta ejecutable.
+
+Ver `docs/delivery/executable-vertical-slices.md`.
 
 ## Destino de entrega
 
