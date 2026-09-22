@@ -1571,6 +1571,12 @@ PHP
 PHP
             : '';
 
+        $testMethods = implode("\n\n", array_values(array_filter([
+            rtrim($paginationTest),
+            rtrim($filteringTest),
+            rtrim($sortingTest),
+        ], static fn (string $test): bool => $test !== '')));
+
         return <<<PHP
 <?php
 
@@ -1584,9 +1590,8 @@ final class ProductsListVerticalSliceTest extends TestCase
 {
     use RefreshDatabase;
 
-$paginationTest
-$filteringTest
-$sortingTest
+$testMethods
+
     private function seedProducts(): void
     {
         DB::table('products')->insert([
