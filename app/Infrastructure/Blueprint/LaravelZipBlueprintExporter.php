@@ -25,7 +25,7 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
         }
 
         foreach ($this->buildFiles($manifest) as $path => $content) {
-            $zip->addFromString("$slug/$path", $content);
+            $zip->addFromString("$slug/$path", $this->normalizeFile($path, $content));
         }
 
         $zip->close();
@@ -58,7 +58,7 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             'storage/framework/views/.gitignore' => "*\n!.gitignore\n",
             'storage/logs/.gitignore' => "*\n!.gitignore\n",
             'bootstrap/app.php' => $this->bootstrapFile($manifest),
-            'bootstrap/providers.php' => "<?php\n\nreturn [\n    App\\Providers\\AppServiceProvider::class,\n];\n",
+            'bootstrap/providers.php' => "<?php\n\nuse App\\Providers\\AppServiceProvider;\n\nreturn [\n    AppServiceProvider::class,\n];\n",
             'public/index.php' => $this->publicIndexFile(),
             'routes/api.php' => $this->routesFile($manifest),
             'routes/console.php' => "<?php\n",
@@ -184,6 +184,7 @@ PHP;
             'use Illuminate\\Http\\Request;',
             'use Illuminate\\Validation\\ValidationException;',
             'use Symfony\\Component\\HttpKernel\\Exception\\HttpExceptionInterface;',
+            'use Throwable;',
         ];
         $middlewareLines = [];
 
@@ -220,9 +221,9 @@ $middlewareText
     })
     ->withExceptions(function (Exceptions \$exceptions): void {
         \$exceptions->shouldRenderJsonWhen(
-            static fn (Request \$request, \\Throwable \$exception): bool => \$request->is('api/*') || \$request->expectsJson(),
+            static fn (Request \$request, Throwable \$exception): bool => \$request->is('api/*') || \$request->expectsJson(),
         );
-        \$exceptions->render(function (\\Throwable \$exception, Request \$request) {
+        \$exceptions->render(function (Throwable \$exception, Request \$request) {
             if (\$request->is('api/*') === false) {
                 return null;
             }
@@ -263,16 +264,22 @@ PHP;
         return <<<'PHP'
 <?php
 
+use Illuminate\Http\Request;
+
 define('LARAVEL_START', microtime(true));
 require __DIR__.'/../vendor/autoload.php';
 
 (require_once __DIR__.'/../bootstrap/app.php')
-    ->handleRequest(Illuminate\Http\Request::capture());
+    ->handleRequest(Request::capture());
 PHP;
     }
 
     private function routesFile(array $manifest): string
     {
+        if ($manifest['endpoints'] === []) {
+            return "<?php\n";
+        }
+
         $imports = [];
         $routes = [];
 
@@ -940,6 +947,15 @@ XML;
         }
 
         return false;
+    }
+
+    private function normalizeFile(string $path, string $content): string
+    {
+        if (str_ends_with($path, '.php')) {
+            return rtrim($content).PHP_EOL;
+        }
+
+        return $content;
     }
 
     private function slug(string $value): string
