@@ -141,6 +141,7 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             'require' => $require,
             'require-dev' => [
                 'laravel/pint' => '^1.27',
+                'nunomaduro/collision' => '^8.6',
                 'phpunit/phpunit' => '^12.5',
             ],
             'autoload' => ['psr-4' => ['App\\' => 'app/']],
@@ -184,7 +185,6 @@ PHP;
             'use Illuminate\\Http\\Request;',
             'use Illuminate\\Validation\\ValidationException;',
             'use Symfony\\Component\\HttpKernel\\Exception\\HttpExceptionInterface;',
-            'use Throwable;',
         ];
         $middlewareLines = [];
 
