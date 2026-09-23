@@ -95,6 +95,7 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
         }
 
         $hasAuthLogin = $this->hasEndpoint($manifest, 'auth.login');
+        $hasAuthLogout = $this->hasEndpoint($manifest, 'auth.logout');
         $hasProductsShow = $this->hasEndpoint($manifest, 'products.show');
         $hasProductsList = $this->hasEndpoint($manifest, 'products.list');
 
@@ -109,6 +110,13 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             $files['app/Infrastructure/Authentication/SanctumAuthenticationGateway.php'] = $this->sanctumAuthenticationGatewayFile();
             $files['app/Presentation/Http/Support/LoginRequestValidator.php'] = $this->loginRequestValidatorFile();
             $files['tests/Feature/AuthLoginVerticalSliceTest.php'] = $this->authLoginVerticalSliceTestFile();
+        }
+
+        if ($hasAuthLogout) {
+            $files['app/Application/Authentication/Contracts/TokenRevocationGateway.php'] = $this->tokenRevocationGatewayContractFile();
+            $files['app/Application/Authentication/UseCases/LogoutUser.php'] = $this->logoutUserUseCaseFile();
+            $files['app/Infrastructure/Authentication/SanctumTokenRevocationGateway.php'] = $this->sanctumTokenRevocationGatewayFile();
+            $files['tests/Feature/AuthLogoutVerticalSliceTest.php'] = $this->authLogoutVerticalSliceTestFile();
         }
 
         if ($hasProductsShow || $hasProductsList) {
@@ -365,7 +373,7 @@ PHP;
         if ($governance['rbac'] && $endpoint['exposure'] === 'internal') {
             $middleware[] = 'can:internal-api';
         }
-        if ($governance['idempotency'] && in_array($endpoint['method'], ['POST', 'PUT', 'PATCH'], true) && $endpoint['id'] !== 'auth.login') {
+        if ($governance['idempotency'] && in_array($endpoint['method'], ['POST', 'PUT', 'PATCH'], true) && ! in_array($endpoint['id'], ['auth.login', 'auth.logout'], true)) {
             $middleware[] = 'idempotency';
         }
         if ($governance['audit']) {
@@ -379,6 +387,9 @@ PHP;
     {
         if ($endpoint['id'] === 'auth.login') {
             return $this->authLoginControllerFile($className);
+        }
+        if ($endpoint['id'] === 'auth.logout') {
+            return $this->authLogoutControllerFile($className);
         }
         if ($endpoint['id'] === 'products.list') {
             return $this->productsListControllerFile($className);
@@ -710,6 +721,11 @@ PHP;
             $imports[] = 'use App\\Infrastructure\\Authentication\\SanctumAuthenticationGateway;';
             $registerLines[] = '        $this->app->bind(AuthenticationGateway::class, SanctumAuthenticationGateway::class);';
         }
+        if ($this->hasEndpoint($manifest, 'auth.logout')) {
+            $imports[] = 'use App\\Application\\Authentication\\Contracts\\TokenRevocationGateway;';
+            $imports[] = 'use App\\Infrastructure\\Authentication\\SanctumTokenRevocationGateway;';
+            $registerLines[] = '        $this->app->bind(TokenRevocationGateway::class, SanctumTokenRevocationGateway::class);';
+        }
         if ($this->hasEndpoint($manifest, 'products.show')) {
             $imports[] = 'use App\\Application\\Products\\Contracts\\ProductReadRepository;';
             $imports[] = 'use App\\Infrastructure\\Products\\DatabaseProductReadRepository;';
@@ -816,7 +832,7 @@ PHP;
 
         $stubEndpoints = array_values(array_filter(
             $manifest['endpoints'],
-            static fn (array $endpoint): bool => ! in_array($endpoint['id'], ['auth.login', 'products.list', 'products.show'], true),
+            static fn (array $endpoint): bool => ! in_array($endpoint['id'], ['auth.login', 'auth.logout', 'products.list', 'products.show'], true),
         ));
 
         if ($stubEndpoints === []) {
@@ -1016,6 +1032,12 @@ XML;
                         $lines[] = "        '422':";
                         $lines[] = '          description: "Datos de inicio de sesión inválidos."';
                         $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
+                    } elseif ($endpoint['id'] === 'auth.logout') {
+                        $lines[] = "        '204':";
+                        $lines[] = '          description: "Sesión cerrada correctamente."';
+                        $lines[] = "        '401':";
+                        $lines[] = '          description: "Token de acceso ausente o inválido."';
+                        $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
                     } elseif ($endpoint['id'] === 'products.list') {
                         $lines[] = "        '200':";
                         $lines[] = '          description: "Listado paginado de productos."';
@@ -1119,14 +1141,14 @@ XML;
     {
         $rows = [];
         foreach ($manifest['endpoints'] as $endpoint) {
-            $status = in_array($endpoint['id'], ['auth.login', 'products.list', 'products.show'], true) ? 'Ejecutable' : 'Stub 501';
+            $status = in_array($endpoint['id'], ['auth.login', 'auth.logout', 'products.list', 'products.show'], true) ? 'Ejecutable' : 'Stub 501';
             $rows[] = "| {$endpoint['method']} | `{$endpoint['path']}` | {$endpoint['summary']} | {$endpoint['exposure']} | $status |";
         }
         $table = $rows === [] ? '_No se seleccionaron endpoints._' : implode("\n", $rows);
         $governance = $manifest['governance'];
         $migrationStep = ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) ? "php artisan migrate\n" : '';
 
-        return "# {$manifest['project']['name']}\n\nSolución Laravel generada por **ApiBlueprint**. El código se mantiene en inglés; mensajes, errores y OpenAPI se presentan en español.\n\n## Gobierno exportado\n\n- Autenticación: `{$governance['authentication']}`\n- RBAC: ".($governance['rbac'] ? 'sí' : 'no')."\n- Correlation ID: ".($governance['correlation_id'] ? 'sí' : 'no')."\n- Rate limit: ".($governance['rate_limiting']['enabled'] ? $governance['rate_limiting']['requests_per_minute'].' solicitudes/minuto' : 'deshabilitado')."\n- Paginación: `{$governance['pagination']['strategy']}`\n- Idempotencia: ".($governance['idempotency'] ? 'sí' : 'no')."\n- Auditoría: ".($governance['audit'] ? 'sí' : 'no')."\n\n## Endpoints exportados\n\n| Método | Ruta | Descripción | Exposición | Implementación |\n| --- | --- | --- | --- | --- |\n$table\n\n## Inicio rápido\n\n```bash\ncomposer install\ncp .env.example .env\nphp artisan key:generate\n{$migrationStep}php artisan test\nphp artisan serve\n```\n\n`auth.login`, `products.list` y `products.show` se exportan como vertical slices ejecutables cuando están seleccionados. Los demás endpoints conservan HTTP 501 hasta que su receta ejecutable sea incorporada. Los endpoints y capacidades no seleccionados no se incluyen como infraestructura dormida.\n";
+        return "# {$manifest['project']['name']}\n\nSolución Laravel generada por **ApiBlueprint**. El código se mantiene en inglés; mensajes, errores y OpenAPI se presentan en español.\n\n## Gobierno exportado\n\n- Autenticación: `{$governance['authentication']}`\n- RBAC: ".($governance['rbac'] ? 'sí' : 'no')."\n- Correlation ID: ".($governance['correlation_id'] ? 'sí' : 'no')."\n- Rate limit: ".($governance['rate_limiting']['enabled'] ? $governance['rate_limiting']['requests_per_minute'].' solicitudes/minuto' : 'deshabilitado')."\n- Paginación: `{$governance['pagination']['strategy']}`\n- Idempotencia: ".($governance['idempotency'] ? 'sí' : 'no')."\n- Auditoría: ".($governance['audit'] ? 'sí' : 'no')."\n\n## Endpoints exportados\n\n| Método | Ruta | Descripción | Exposición | Implementación |\n| --- | --- | --- | --- | --- |\n$table\n\n## Inicio rápido\n\n```bash\ncomposer install\ncp .env.example .env\nphp artisan key:generate\n{$migrationStep}php artisan test\nphp artisan serve\n```\n\n`auth.login`, `auth.logout`, `products.list` y `products.show` se exportan como vertical slices ejecutables cuando están seleccionados. Los demás endpoints conservan HTTP 501 hasta que su receta ejecutable sea incorporada. Los endpoints y capacidades no seleccionados no se incluyen como infraestructura dormida.\n";
     }
 
     private function controllerClassName(string $endpointId): string
@@ -1497,6 +1519,149 @@ final class AuthLoginVerticalSliceTest extends TestCase
             ->assertJsonPath('title', 'Error de validación')
             ->assertJsonPath('errors.email.0', 'El correo electrónico es obligatorio.')
             ->assertJsonPath('errors.password.0', 'La contraseña es obligatoria.');
+    }
+}
+PHP;
+    }
+
+
+    private function authLogoutControllerFile(string $className): string
+    {
+        return <<<PHP
+<?php
+
+namespace App\Presentation\Http\Controllers\Generated;
+
+use App\Application\Authentication\UseCases\LogoutUser;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+final readonly class $className
+{
+    public function __construct(private LogoutUser \$logoutUser)
+    {
+        //
+    }
+
+    public function __invoke(Request \$request): Response
+    {
+        \$token = (string) \$request->bearerToken();
+        \$this->logoutUser->handle(\$token);
+
+        return response()->noContent();
+    }
+}
+PHP;
+    }
+
+    private function tokenRevocationGatewayContractFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Authentication\Contracts;
+
+interface TokenRevocationGateway
+{
+    public function revoke(string $plainTextToken): bool;
+}
+PHP;
+    }
+
+    private function logoutUserUseCaseFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Authentication\UseCases;
+
+use App\Application\Authentication\Contracts\TokenRevocationGateway;
+
+final readonly class LogoutUser
+{
+    public function __construct(private TokenRevocationGateway $tokens)
+    {
+        //
+    }
+
+    public function handle(string $plainTextToken): bool
+    {
+        return $plainTextToken !== '' && $this->tokens->revoke($plainTextToken);
+    }
+}
+PHP;
+    }
+
+    private function sanctumTokenRevocationGatewayFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Infrastructure\Authentication;
+
+use App\Application\Authentication\Contracts\TokenRevocationGateway;
+use Laravel\Sanctum\PersonalAccessToken;
+
+final class SanctumTokenRevocationGateway implements TokenRevocationGateway
+{
+    public function revoke(string $plainTextToken): bool
+    {
+        $token = PersonalAccessToken::findToken($plainTextToken);
+        if ($token === null) {
+            return false;
+        }
+
+        return (bool) $token->delete();
+    }
+}
+PHP;
+    }
+
+    private function authLogoutVerticalSliceTestFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace Tests\Feature;
+
+use App\Infrastructure\Identity\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\PersonalAccessToken;
+use Tests\TestCase;
+
+final class AuthLogoutVerticalSliceTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_current_sanctum_token_is_revoked_without_affecting_the_authentication_model(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Usuario de prueba',
+            'email' => 'logout@example.com',
+            'password' => Hash::make('secret-password'),
+        ]);
+
+        $login = $this->postJson('/api/v1/auth/login', [
+            'email' => 'logout@example.com',
+            'password' => 'secret-password',
+            'device_name' => 'logout-test',
+        ])->assertOk();
+
+        $plainTextToken = $login->json('data.access_token');
+        $this->assertIsString($plainTextToken);
+        $this->assertNotNull(PersonalAccessToken::findToken($plainTextToken));
+
+        $this->withToken($plainTextToken)
+            ->postJson('/api/v1/auth/logout')
+            ->assertNoContent();
+
+        $this->assertNull(PersonalAccessToken::findToken($plainTextToken));
+        $this->assertSame((string) $user->getKey(), (string) User::query()->findOrFail($user->getKey())->getKey());
+
+        $this->withToken($plainTextToken)
+            ->postJson('/api/v1/auth/logout')
+            ->assertUnauthorized();
     }
 }
 PHP;

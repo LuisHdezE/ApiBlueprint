@@ -57,11 +57,12 @@ Las primeras features ejecutables de la biblioteca son:
 
 - `products.list`;
 - `products.show`;
-- `auth.login`.
+- `auth.login`;
+- `auth.logout`.
 
-`auth.login` es una única feature canónica compartida por SaaS, Commerce y cualquier aplicación futura que necesite autenticación. Exporta usuario e identidad mínimos reutilizables, un puerto de Application, adaptador Laravel Sanctum, validación HTTP, migraciones, contrato OpenAPI y tests reales de emisión de token. No se crea un login independiente por tipo de aplicación.
+`auth.login` y `auth.logout` forman el ciclo mínimo canónico de autenticación. `auth.login` es una única feature compartida por SaaS, Commerce y cualquier aplicación futura que necesite autenticación. Exporta usuario e identidad mínimos reutilizables, un puerto de Application, adaptador Laravel Sanctum, validación HTTP, migraciones, contrato OpenAPI y tests reales de emisión de token. No se crea un login independiente por tipo de aplicación.
 
-Cuando una composición selecciona `auth.login`, la estrategia `authentication=none` se reconcilia a `sanctum` y el ajuste queda registrado en el manifest resuelto.
+Cuando una composición selecciona `auth.login`, la estrategia `authentication=none` se reconcilia a `sanctum` y el ajuste queda registrado en el manifest resuelto. `auth.logout` depende de `auth.login` y revoca únicamente el token Sanctum actual, reutilizando la misma identidad, tabla de usuarios y almacenamiento de tokens.
 
 ## 4. Ingreso de nuevas aplicaciones mediante imagen + descripción
 

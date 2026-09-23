@@ -154,6 +154,16 @@ final readonly class GetMasterOpenApi
             }
         }
 
+        if ($feature['id'] === 'auth.logout') {
+            return [
+                '204' => ['description' => 'Sesión cerrada correctamente.'],
+                '401' => [
+                    'description' => 'Token de acceso ausente o inválido.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+            ];
+        }
+
         if (str_ends_with($feature['id'], '.list')) {
             $parameters[] = [
                 'name' => 'page[size]',
