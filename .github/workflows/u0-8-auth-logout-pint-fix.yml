@@ -1,0 +1,35 @@
+name: U0.8 Auth Logout Pint Fix
+
+on:
+  push:
+    branches:
+      - feature/u0-8-auth-logout
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/u0-8-auth-logout
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Apply Pint
+        run: vendor/bin/pint app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php tests/Feature/GeneratedAuthLogoutVerticalSliceExportTest.php
+      - name: Commit style fix when needed
+        run: |
+          if git diff --quiet; then
+            echo "No style changes pending."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php tests/Feature/GeneratedAuthLogoutVerticalSliceExportTest.php
+          git commit -m "style: format auth logout feature"
+          git push origin HEAD:feature/u0-8-auth-logout
