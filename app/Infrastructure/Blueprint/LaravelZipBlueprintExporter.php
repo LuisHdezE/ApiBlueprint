@@ -97,6 +97,7 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
         $hasAuthLogin = $this->hasEndpoint($manifest, 'auth.login');
         $hasAuthLogout = $this->hasEndpoint($manifest, 'auth.logout');
         $hasUsersList = $this->hasEndpoint($manifest, 'users.list');
+        $hasUsersShow = $this->hasEndpoint($manifest, 'users.show');
         $hasProductsShow = $this->hasEndpoint($manifest, 'products.show');
         $hasProductsList = $this->hasEndpoint($manifest, 'products.list');
 
@@ -125,13 +126,23 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             $files['tests/Feature/AuthLogoutVerticalSliceTest.php'] = $this->authLogoutVerticalSliceTestFile();
         }
 
+        if ($hasUsersList || $hasUsersShow) {
+            $files['app/Application/Users/Data/UserData.php'] = $this->userDataFile();
+        }
+
         if ($hasUsersList) {
             $files['app/Application/Users/Contracts/UserListRepository.php'] = $this->userListRepositoryContractFile();
-            $files['app/Application/Users/Data/UserListItem.php'] = $this->userListItemFile();
             $files['app/Application/Users/Data/UserPage.php'] = $this->userPageFile();
             $files['app/Application/Users/UseCases/ListUsers.php'] = $this->listUsersUseCaseFile();
             $files['app/Infrastructure/Users/DatabaseUserListRepository.php'] = $this->databaseUserListRepositoryFile();
             $files['tests/Feature/UsersListVerticalSliceTest.php'] = $this->usersListVerticalSliceTestFile($manifest);
+        }
+
+        if ($hasUsersShow) {
+            $files['app/Application/Users/Contracts/UserReadRepository.php'] = $this->userReadRepositoryContractFile();
+            $files['app/Application/Users/UseCases/GetUser.php'] = $this->getUserUseCaseFile();
+            $files['app/Infrastructure/Users/DatabaseUserReadRepository.php'] = $this->databaseUserReadRepositoryFile();
+            $files['tests/Feature/UsersShowVerticalSliceTest.php'] = $this->usersShowVerticalSliceTestFile();
         }
 
         if ($hasProductsShow || $hasProductsList) {
@@ -199,7 +210,7 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             'phpunit/phpunit' => '^12.5',
         ];
 
-        if ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'users.list') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) {
+        if ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'users.list') || $this->hasEndpoint($manifest, 'users.show') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) {
             $requireDev['mockery/mockery'] = '^1.6';
         }
 
@@ -407,6 +418,9 @@ PHP;
         }
         if ($endpoint['id'] === 'users.list') {
             return $this->usersListControllerFile($className);
+        }
+        if ($endpoint['id'] === 'users.show') {
+            return $this->usersShowControllerFile($className);
         }
         if ($endpoint['id'] === 'products.list') {
             return $this->productsListControllerFile($className);
@@ -923,6 +937,11 @@ PHP;
             $imports[] = 'use App\\Infrastructure\\Users\\DatabaseUserListRepository;';
             $registerLines[] = '        $this->app->bind(UserListRepository::class, DatabaseUserListRepository::class);';
         }
+        if ($this->hasEndpoint($manifest, 'users.show')) {
+            $imports[] = 'use App\\Application\\Users\\Contracts\\UserReadRepository;';
+            $imports[] = 'use App\\Infrastructure\\Users\\DatabaseUserReadRepository;';
+            $registerLines[] = '        $this->app->bind(UserReadRepository::class, DatabaseUserReadRepository::class);';
+        }
         if ($this->hasEndpoint($manifest, 'products.show')) {
             $imports[] = 'use App\\Application\\Products\\Contracts\\ProductReadRepository;';
             $imports[] = 'use App\\Infrastructure\\Products\\DatabaseProductReadRepository;';
@@ -1029,7 +1048,7 @@ PHP;
 
         $stubEndpoints = array_values(array_filter(
             $manifest['endpoints'],
-            static fn (array $endpoint): bool => ! in_array($endpoint['id'], ['auth.login', 'auth.logout', 'users.list', 'products.list', 'products.show'], true),
+            static fn (array $endpoint): bool => ! in_array($endpoint['id'], ['auth.login', 'auth.logout', 'users.list', 'users.show', 'products.list', 'products.show'], true),
         ));
 
         if ($stubEndpoints === []) {
@@ -1122,7 +1141,7 @@ PHP;
 
     private function phpUnitFile(array $manifest): string
     {
-        $databaseEnvironment = ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'users.list') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list'))
+        $databaseEnvironment = ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'users.list') || $this->hasEndpoint($manifest, 'users.show') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list'))
             ? "        <env name=\"DB_CONNECTION\" value=\"sqlite\"/>\n        <env name=\"DB_DATABASE\" value=\":memory:\"/>\n"
             : '';
 
@@ -1245,7 +1264,7 @@ XML;
                     } elseif ($endpoint['id'] === 'users.list') {
                         $lines[] = "        '200':";
                         $lines[] = '          description: "Listado paginado de usuarios."';
-                        $lines[] = '          content: { application/json: { schema: { type: object, required: [data, meta], properties: { data: { type: array, items: { $ref: "#/components/schemas/UserListItem" } }, meta: { $ref: "#/components/schemas/ListMeta" } } } } }';
+                        $lines[] = '          content: { application/json: { schema: { type: object, required: [data, meta], properties: { data: { type: array, items: { $ref: "#/components/schemas/UserData" } }, meta: { $ref: "#/components/schemas/ListMeta" } } } } }';
                         $lines[] = "        '401':";
                         $lines[] = '          description: "Autenticación requerida."';
                         $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
@@ -1263,6 +1282,21 @@ XML;
                         $lines[] = '          content: { application/json: { schema: { type: object, required: [data, meta], properties: { data: { type: array, items: { $ref: "#/components/schemas/Product" } }, meta: { $ref: "#/components/schemas/ListMeta" } } } } }';
                         $lines[] = "        '422':";
                         $lines[] = '          description: "Parámetros de listado inválidos."';
+                        $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
+                    } elseif ($endpoint['id'] === 'users.show') {
+                        $lines[] = "        '200':";
+                        $lines[] = '          description: "Usuario encontrado."';
+                        $lines[] = '          content: { application/json: { schema: { type: object, required: [data], properties: { data: { $ref: "#/components/schemas/UserData" } } } } }';
+                        $lines[] = "        '401':";
+                        $lines[] = '          description: "Autenticación requerida."';
+                        $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
+                        if ($governance['rbac']) {
+                            $lines[] = "        '403':";
+                            $lines[] = '          description: "Se requieren privilegios de administrador."';
+                            $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
+                        }
+                        $lines[] = "        '404':";
+                        $lines[] = '          description: "Usuario no encontrado."';
                         $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
                     } elseif ($endpoint['id'] === 'products.show') {
                         $lines[] = "        '200':";
@@ -1331,8 +1365,8 @@ XML;
             $lines[] = '        id: { type: string }';
             $lines[] = '        name: { type: string }';
         }
-        if ($this->hasEndpoint($manifest, 'users.list')) {
-            $lines[] = '    UserListItem:';
+        if ($this->hasEndpoint($manifest, 'users.list') || $this->hasEndpoint($manifest, 'users.show')) {
+            $lines[] = '    UserData:';
             $lines[] = '      type: object';
             $lines[] = '      required: [id, name, email, role]';
             $lines[] = '      properties:';
@@ -1370,7 +1404,7 @@ XML;
     {
         $rows = [];
         foreach ($manifest['endpoints'] as $endpoint) {
-            $status = in_array($endpoint['id'], ['auth.login', 'auth.logout', 'users.list', 'products.list', 'products.show'], true) ? 'Ejecutable' : 'Stub 501';
+            $status = in_array($endpoint['id'], ['auth.login', 'auth.logout', 'users.list', 'users.show', 'products.list', 'products.show'], true) ? 'Ejecutable' : 'Stub 501';
             $rows[] = "| {$endpoint['method']} | `{$endpoint['path']}` | {$endpoint['summary']} | {$endpoint['exposure']} | $status |";
         }
         $table = $rows === [] ? '_No se seleccionaron endpoints._' : implode("\n", $rows);
@@ -2163,6 +2197,45 @@ $strategyRule
 PHP;
     }
 
+    private function usersShowControllerFile(string $className): string
+    {
+        return <<<PHP
+<?php
+
+namespace App\Presentation\Http\Controllers\Generated;
+
+use App\Application\Users\UseCases\GetUser;
+use App\Presentation\Http\Support\ProblemDetails;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+final readonly class $className
+{
+    public function __construct(private GetUser \$getUser)
+    {
+        //
+    }
+
+    public function __invoke(Request \$request, string \$id): JsonResponse
+    {
+        \$user = \$this->getUser->execute(\$id);
+
+        if (\$user === null) {
+            return ProblemDetails::response(
+                request: \$request,
+                status: 404,
+                title: 'Usuario no encontrado',
+                detail: 'No existe un usuario con el identificador solicitado.',
+                type: 'https://eliasworks.uy/problems/user-not-found',
+            );
+        }
+
+        return response()->json(['data' => \$user->toArray()]);
+    }
+}
+PHP;
+    }
+
     private function usersListControllerFile(string $className): string
     {
         return <<<PHP
@@ -2214,6 +2287,82 @@ final readonly class $className
 PHP;
     }
 
+    private function userReadRepositoryContractFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Users\Contracts;
+
+use App\Application\Users\Data\UserData;
+
+interface UserReadRepository
+{
+    public function find(string $id): ?UserData;
+}
+PHP;
+    }
+
+    private function getUserUseCaseFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Users\UseCases;
+
+use App\Application\Users\Contracts\UserReadRepository;
+use App\Application\Users\Data\UserData;
+
+final readonly class GetUser
+{
+    public function __construct(private UserReadRepository $users)
+    {
+        //
+    }
+
+    public function execute(string $id): ?UserData
+    {
+        return $this->users->find($id);
+    }
+}
+PHP;
+    }
+
+    private function databaseUserReadRepositoryFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Infrastructure\Users;
+
+use App\Application\Users\Contracts\UserReadRepository;
+use App\Application\Users\Data\UserData;
+use Illuminate\Support\Facades\DB;
+
+final class DatabaseUserReadRepository implements UserReadRepository
+{
+    public function find(string $id): ?UserData
+    {
+        $row = DB::table('users')
+            ->select(['id', 'name', 'email', 'role'])
+            ->where('id', $id)
+            ->first();
+
+        if ($row === null) {
+            return null;
+        }
+
+        return new UserData(
+            id: (string) $row->id,
+            name: (string) $row->name,
+            email: (string) $row->email,
+            role: (string) $row->role,
+        );
+    }
+}
+PHP;
+    }
+
     private function userListRepositoryContractFile(): string
     {
         return <<<'PHP'
@@ -2231,14 +2380,14 @@ interface UserListRepository
 PHP;
     }
 
-    private function userListItemFile(): string
+    private function userDataFile(): string
     {
         return <<<'PHP'
 <?php
 
 namespace App\Application\Users\Data;
 
-final readonly class UserListItem
+final readonly class UserData
 {
     public function __construct(
         public string $id,
@@ -2271,7 +2420,7 @@ namespace App\Application\Users\Data;
 
 final readonly class UserPage
 {
-    /** @param list<UserListItem> $items */
+    /** @param list<UserData> $items */
     public function __construct(
         public array $items,
         public array $meta,
@@ -2282,7 +2431,7 @@ final readonly class UserPage
     public function toArray(): array
     {
         return [
-            'data' => array_map(static fn (UserListItem $user): array => $user->toArray(), $this->items),
+            'data' => array_map(static fn (UserData $user): array => $user->toArray(), $this->items),
             'meta' => $this->meta,
         ];
     }
@@ -2325,7 +2474,7 @@ namespace App\Infrastructure\Users;
 
 use App\Application\Shared\Query\QueryOptions;
 use App\Application\Users\Contracts\UserListRepository;
-use App\Application\Users\Data\UserListItem;
+use App\Application\Users\Data\UserData;
 use App\Application\Users\Data\UserPage;
 use App\Infrastructure\Database\DatabaseQueryPaginator;
 use Illuminate\Database\Query\Builder;
@@ -2347,7 +2496,7 @@ final readonly class DatabaseUserListRepository implements UserListRepository
 
         return new UserPage(
             items: array_map(
-                static fn (object $row): UserListItem => new UserListItem(
+                static fn (object $row): UserData => new UserData(
                     id: (string) $row->id,
                     name: (string) $row->name,
                     email: (string) $row->email,
@@ -2376,6 +2525,79 @@ final readonly class DatabaseUserListRepository implements UserListRepository
                 $query->where('role', (string) $value);
             }
         }
+    }
+}
+PHP;
+    }
+
+    private function usersShowVerticalSliceTestFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace Tests\Feature;
+
+use App\Infrastructure\Identity\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
+
+final class UsersShowVerticalSliceTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_admin_can_retrieve_a_user_without_password(): void
+    {
+        $token = $this->tokenFor('admin@example.com', 'admin');
+        $target = User::query()->create([
+            'name' => 'Usuario objetivo',
+            'email' => 'target@example.com',
+            'password' => Hash::make('secret-password'),
+            'role' => 'user',
+        ]);
+
+        $response = $this->withToken($token)
+            ->getJson('/api/v1/users/'.$target->getKey())
+            ->assertOk()
+            ->assertJsonPath('data.id', (string) $target->getKey())
+            ->assertJsonPath('data.name', 'Usuario objetivo')
+            ->assertJsonPath('data.email', 'target@example.com')
+            ->assertJsonPath('data.role', 'user');
+
+        $this->assertArrayNotHasKey('password', $response->json('data'));
+    }
+
+    public function test_missing_user_uses_problem_details_in_spanish(): void
+    {
+        $token = $this->tokenFor('admin-missing@example.com', 'admin');
+
+        $this->withToken($token)
+            ->getJson('/api/v1/users/999999')
+            ->assertStatus(404)
+            ->assertHeader('content-type', 'application/problem+json')
+            ->assertJsonPath('title', 'Usuario no encontrado')
+            ->assertJsonPath('status', 404);
+    }
+
+    public function test_non_admin_user_is_forbidden(): void
+    {
+        $token = $this->tokenFor('viewer-show@example.com', 'user');
+
+        $this->withToken($token)
+            ->getJson('/api/v1/users/1')
+            ->assertForbidden();
+    }
+
+    private function tokenFor(string $email, string $role): string
+    {
+        $user = User::query()->create([
+            'name' => $role === 'admin' ? 'Administrador' : 'Usuario',
+            'email' => $email,
+            'password' => Hash::make('secret-password'),
+            'role' => $role,
+        ]);
+
+        return $user->createToken('tests')->plainTextToken;
     }
 }
 PHP;

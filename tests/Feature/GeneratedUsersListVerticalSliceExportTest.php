@@ -60,7 +60,7 @@ final class GeneratedUsersListVerticalSliceExportTest extends TestCase
         $this->assertStringContainsString("'can:admin-api'", $routes);
 
         $this->assertIsString($openApi);
-        $this->assertStringContainsString('UserListItem:', $openApi);
+        $this->assertStringContainsString('UserData:', $openApi);
         $this->assertStringContainsString('ListMeta:', $openApi);
         $this->assertStringContainsString('filter[email]', $openApi);
         $this->assertStringContainsString("'403':", $openApi);

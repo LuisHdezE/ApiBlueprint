@@ -178,12 +178,12 @@ Integrado por PR #10 con CI pre-merge y post-merge verdes. U0.8 queda cerrado co
 
 ## U0.9 - Users Library 🚧
 
-### Checkpoint 1 - `users.list` 🚧
+### Checkpoint 1 - `users.list` ✅
 
 - reutiliza la identidad `User`, Sanctum y RBAC ya existentes;
 - endpoint canónico `GET /api/v1/users` con exposición `admin`;
 - puerto `UserListRepository` y caso de uso `ListUsers` en Application;
-- salida segura `UserListItem` sin password;
+- salida segura `UserData` sin password;
 - filtros `id`, `name`, `email` y `role`;
 - sorting determinista por `id`, `name`, `email` y `role`;
 - cursor keyset y offset reutilizando un único `DatabaseQueryPaginator` compartido con Products;
@@ -192,6 +192,20 @@ Integrado por PR #10 con CI pre-merge y post-merge verdes. U0.8 queda cerrado co
 - Swagger maestro y OpenAPI generado actualizados en el mismo checkpoint;
 - catálogo SaaS actualizado automáticamente desde la feature canónica;
 - acceptance generado prueba autorización admin, ausencia de password, paginación, filtros y sorting.
+
+Integrado por PR #11 con CI pre-merge #76 y post-merge #77 verdes.
+
+## U0.10 - Users Library: `users.show` 🚧
+
+- reutiliza `User`, Sanctum y el gate `admin-api` existentes;
+- `UserData` pasa a ser la representación pública compartida de lectura de Usuarios;
+- `UserReadRepository` y `GetUser` en Application;
+- `DatabaseUserReadRepository` en Infrastructure sin exponer password;
+- controlador real con 200 y 404 RFC 9457 en español;
+- 401/403 gobernados por Sanctum/RBAC;
+- Swagger maestro y OpenAPI generado actualizados en el mismo checkpoint;
+- export exclusivo de `users.show` no arrastra paginación, listados ni Products;
+- acceptance SaaS debe ejecutar list + show sobre la misma identidad y `UserData`.
 
 ### Siguientes checkpoints previstos
 - hacer que el compositor distinga claramente features implementadas, en desarrollo y pendientes;
