@@ -1,0 +1,38 @@
+name: U0.8 Auth Logout Fresh Guard
+
+on:
+  push:
+    branches:
+      - feature/u0-8-auth-logout
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/u0-8-auth-logout
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - name: Apply test-lifecycle correction
+        run: python3 scripts/u0-8-auth-logout-fresh-guard.py
+      - name: Validate syntax
+        run: |
+          php -l app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php
+          php -l tests/Feature/GeneratedAuthLogoutVerticalSliceExportTest.php
+      - name: Commit correction when needed
+        run: |
+          if git diff --quiet; then
+            echo "No correction pending."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php tests/Feature/GeneratedAuthLogoutVerticalSliceExportTest.php
+          git commit -m "test: reset auth guard before revoked token retry"
+          git push origin HEAD:feature/u0-8-auth-logout
