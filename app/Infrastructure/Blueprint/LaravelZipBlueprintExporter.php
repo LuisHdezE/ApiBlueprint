@@ -2202,27 +2202,27 @@ PHP;
         return <<<PHP
 <?php
 
-namespace App\\Presentation\\Http\\Controllers\\Generated;
+namespace App\Presentation\Http\Controllers\Generated;
 
-use App\\Application\\Users\\UseCases\\GetUser;
-use App\\Presentation\\Http\\Support\\ProblemDetails;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
+use App\Application\Users\UseCases\GetUser;
+use App\Presentation\Http\Support\ProblemDetails;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 final readonly class $className
 {
-    public function __construct(private GetUser \\$getUser)
+    public function __construct(private GetUser \$getUser)
     {
         //
     }
 
-    public function __invoke(Request \\$request, string \\$id): JsonResponse
+    public function __invoke(Request \$request, string \$id): JsonResponse
     {
-        \\$user = \\$this->getUser->execute(\\$id);
+        \$user = \$this->getUser->execute(\$id);
 
-        if (\\$user === null) {
+        if (\$user === null) {
             return ProblemDetails::response(
-                request: \\$request,
+                request: \$request,
                 status: 404,
                 title: 'Usuario no encontrado',
                 detail: 'No existe un usuario con el identificador solicitado.',
@@ -2230,7 +2230,7 @@ final readonly class $className
             );
         }
 
-        return response()->json(['data' => \\$user->toArray()]);
+        return response()->json(['data' => \$user->toArray()]);
     }
 }
 PHP;
