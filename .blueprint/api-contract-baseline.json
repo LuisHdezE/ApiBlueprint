@@ -1,0 +1,51 @@
+{
+    "schema_version": "1.0",
+    "blueprint_version": "0.5.4",
+    "api_version": "v1",
+    "contract_revision": "b75a0d933a66497ff378f02e74500443ec52ddcfe4fea6039b9defe0b9e7dc87",
+    "operations": [
+        {
+            "operation_id": "auth_login",
+            "method": "POST",
+            "path": "/api/v1/auth/login",
+            "contract_sha256": "9258119b0a0648f40c47b6c678e0ab3544273fa04cfeaec4873d9a6e7c94ccf5"
+        },
+        {
+            "operation_id": "auth_logout",
+            "method": "POST",
+            "path": "/api/v1/auth/logout",
+            "contract_sha256": "bd4bbbf61ad9b7f10c32eee60fbf44f2defac50db12f8429ee242bc4ec73a602"
+        },
+        {
+            "operation_id": "products_list",
+            "method": "GET",
+            "path": "/api/v1/products",
+            "contract_sha256": "51c117ca8bd5cf783510e075cd6c00868894047a65e99f841da5a53207af20a6"
+        },
+        {
+            "operation_id": "products_show",
+            "method": "GET",
+            "path": "/api/v1/products/{id}",
+            "contract_sha256": "2e14afa84dfe47a56050beefb9c76b52bc0defd4c4f8d84d8a71fcf387813399"
+        },
+        {
+            "operation_id": "users_create",
+            "method": "POST",
+            "path": "/api/v1/users",
+            "contract_sha256": "83e1c5a294fca318492cd7cbb7afe129c78639a3b63afa27547e2d68ac05a6b9"
+        },
+        {
+            "operation_id": "users_list",
+            "method": "GET",
+            "path": "/api/v1/users",
+            "contract_sha256": "e14c9f4619ef5c04e19fd47c37594a252dfe4a46e8c76aa18f252f7a43fd57de"
+        },
+        {
+            "operation_id": "users_show",
+            "method": "GET",
+            "path": "/api/v1/users/{id}",
+            "contract_sha256": "3dee92b276f22d5956b5829d9f1da827c8c247a85b1cae579c2908c76dec43cc"
+        }
+    ],
+    "source_revision": "07297c9438d0efd3421e197fd8e78f4302c12c42"
+}
