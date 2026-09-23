@@ -123,8 +123,17 @@ final readonly class ResolveBlueprintManifest
             }
         }
 
-        $this->validateGovernanceAgainstSurface($governance, $selected, $errors);
         $governanceAdjustments = [];
+
+        if (isset($selected['auth.login']) && $governance['authentication'] === 'none') {
+            $governance['authentication'] = 'sanctum';
+            $governanceAdjustments[] = [
+                'capability' => 'authentication',
+                'reason' => 'El inicio de sesión requiere Laravel Sanctum como estrategia de autenticación.',
+            ];
+        }
+
+        $this->validateGovernanceAgainstSurface($governance, $selected, $errors);
 
         if (isset($selected['audit.list']) && $governance['audit'] === false) {
             $governance['audit'] = true;
