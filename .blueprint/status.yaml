@@ -1,5 +1,5 @@
 blueprint_version: 0.5.4
-updated_at: '2026-09-23T12:50:00-03:00'
+updated_at: '2026-09-23T18:04:00-03:00'
 phases:
   brownfield_inspection:
     status: COMPLETE
@@ -211,8 +211,8 @@ checks:
   api.architecture_implementation_conformance:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-ARCH-CONFORMANCE-ROOT]
-    note: Root conformance passes; exported-project guardrails are tracked as BP-ADOPT-003.
+    evidence_ids: [EVD-ARCH-CONFORMANCE-ROOT, EVD-BPADOPT003-EXPORT-QA, EVD-BPADOPT003-GENERATED-ACCEPTANCE]
+    note: Root and exported-project conformance pass; generated guardrails execute inside Blank, CRUD, SaaS and Commerce acceptance.
   api.openapi:
     status: PASS
     verification: evidence
@@ -377,3 +377,15 @@ artifacts:
   - id: EVD-BPADOPT002-DOCUMENTATION
     type: file
     value: docs/delivery/requirements-traceability.md
+  - id: EVD-BPADOPT003-EXPORT-DECORATOR
+    type: file
+    value: app/Infrastructure/Blueprint/ArchitectureConformanceBlueprintExporter.php
+  - id: EVD-BPADOPT003-EXPORT-QA
+    type: test_report
+    value: tests/Feature/GeneratedArchitectureBoundaryExportTest.php
+  - id: EVD-BPADOPT003-GENERATED-ACCEPTANCE
+    type: test_report
+    value: scripts/accept-generated-solutions.sh
+  - id: EVD-BPADOPT003-DOCUMENTATION
+    type: file
+    value: docs/delivery/generated-architecture-conformance.md
