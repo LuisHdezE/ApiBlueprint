@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.5.4",
+  "evidence": [
+    {
+      "id": "EVD-U04-PRODUCTION-RELEASE",
+      "type": "runtime_check",
+      "value": "https://apiblueprint.eliasworks.uy/release.json",
+      "description": "Release público accesible por HTTPS y asociado al commit b4b9953d5c44384177294b2d60d247e62f322ec9, promoción deploy/production y workflow run 35669837271.",
+      "scope": {"level": "phase", "id": "u0.4"},
+      "created_at": "2026-09-23T20:03:20Z",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-U04-PUBLIC-LANDING",
+      "type": "runtime_check",
+      "value": "https://apiblueprint.eliasworks.uy/",
+      "description": "Landing pública verificada con HTTP 200 y contenido ApiBlueprint después de provisionar el entorno persistente de producción.",
+      "scope": {"level": "phase", "id": "u0.4"},
+      "created_at": "2026-09-23T20:02:39Z",
+      "producer": "manual"
+    },
+    {
+      "id": "EVD-U04-RUNTIME-STATUS",
+      "type": "runtime_check",
+      "value": "https://apiblueprint.eliasworks.uy/api/v1/meta/status",
+      "description": "Runtime verificado con HTTP 200, status=ok, api_version=v1 y blueprint_schema=0.3.",
+      "scope": {"level": "phase", "id": "u0.4"},
+      "created_at": "2026-09-23T20:03:18Z",
+      "producer": "manual"
+    },
+    {
+      "id": "EVD-U04-EXPORT-SMOKE",
+      "type": "runtime_check",
+      "value": "POST https://apiblueprint.eliasworks.uy/api/v1/blueprint/export",
+      "description": "Exportación de deployment/smoke-manifest.json verificada con HTTP 200 y firma ZIP PK en los dos primeros bytes.",
+      "scope": {"level": "phase", "id": "u0.4"},
+      "created_at": "2026-09-23T20:03:20Z",
+      "producer": "manual"
+    },
+    {
+      "id": "EVD-U04-ENVIRONMENT-CONTRACT",
+      "type": "file",
+      "value": "deployment/production.env.example",
+      "description": "Contrato de entorno productivo sin secretos. APP_KEY se provisiona fuera del repositorio y .env se preserva entre releases.",
+      "scope": {"level": "phase", "id": "u0.4"},
+      "created_at": "2026-09-23T20:03:20Z",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-U04-RUNTIME-ACCEPTANCE-DOC",
+      "type": "file",
+      "value": "docs/delivery/production-runtime-acceptance.md",
+      "description": "Acta reproducible del smoke público, causa del bloqueo inicial, corrección operativa y criterio de cierre de U0.4.",
+      "scope": {"level": "phase", "id": "u0.4"},
+      "created_at": "2026-09-23T20:03:20Z",
+      "producer": "mixed"
+    }
+  ]
+}
