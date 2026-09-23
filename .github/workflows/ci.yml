@@ -45,8 +45,13 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      - name: Code style
-        run: vendor/bin/pint --test
+      - name: Diagnose code style
+        shell: bash
+        run: |
+          set -euo pipefail
+          vendor/bin/pint scripts/api-evolution.php
+          git diff -- scripts/api-evolution.php
+          exit 1
 
       - name: Tests
         run: php artisan test
