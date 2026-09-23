@@ -1,5 +1,5 @@
 blueprint_version: 0.5.4
-updated_at: '2026-09-23T11:39:00-03:00'
+updated_at: '2026-09-23T12:50:00-03:00'
 phases:
   brownfield_inspection:
     status: COMPLETE
@@ -14,17 +14,17 @@ phases:
     status: COMPLETE
     progress: 100
   requirements_domain:
-    status: IN_PROGRESS
-    progress: 55
+    status: COMPLETE
+    progress: 100
   interface_scope_baseline:
     status: NOT_STARTED
     progress: 0
   architecture_security_data:
     status: IN_PROGRESS
-    progress: 70
+    progress: 75
   api_contract_design:
-    status: IN_PROGRESS
-    progress: 70
+    status: COMPLETE
+    progress: 100
   api_implementation:
     status: COMPLETE
     progress: 100
@@ -39,7 +39,7 @@ phases:
     progress: 80
   api_gate:
     status: BLOCKED
-    progress: 70
+    progress: 78
   interface_inventory:
     status: NOT_STARTED
     progress: 0
@@ -86,29 +86,33 @@ checks:
     verification: evidence
     evidence_ids: [EVD-BPAUDIT-TARGET]
   requirements.actors_authorization:
-    status: PENDING
+    status: PASS
     verification: evidence
-    note: Existing exposure and RBAC intent is strong but not yet linked to stable requirement/use-case IDs.
+    evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG, EVD-BPADOPT002-FEATURE-TRACEABILITY]
   requirements.functional:
-    status: PENDING
+    status: PASS
     verification: evidence
-    note: Functional intent exists across catalog and delivery docs but is not yet formalized as a traceable requirements baseline.
+    evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG]
   requirements.non_functional:
-    status: PENDING
+    status: PASS
     verification: evidence
+    evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG]
   requirements.business_rules:
-    status: PENDING
+    status: PASS
     verification: evidence
-    note: Business rules exist materially in the manifest resolver and feature contracts but lack a formal requirement traceability layer.
+    evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG]
   requirements.use_cases:
-    status: PENDING
+    status: PASS
     verification: evidence
+    evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG]
   requirements.acceptance_criteria:
-    status: PENDING
+    status: PASS
     verification: evidence
+    evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG]
   requirements.traceability:
-    status: PENDING
+    status: PASS
     verification: evidence
+    evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
   architecture.domain_model:
     status: PENDING
     verification: evidence
@@ -135,8 +139,10 @@ checks:
     status: N/A
     verification: evidence
   audit.event_catalog:
-    status: PENDING
+    status: PASS
     verification: evidence
+    evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG, EVD-BPADOPT002-FEATURE-TRACEABILITY]
+    note: Semantic event IDs are specified and mapped; runtime semantic emission and audit QA remain separate work.
   audit.retention_policy:
     status: PENDING
     verification: evidence
@@ -165,21 +171,25 @@ checks:
     verification: evidence
     evidence_ids: [EVD-BLUEPRINT-EXPORT-QA]
   api.permission_matrix:
-    status: PENDING
+    status: PASS
     verification: evidence
+    evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
   api.audit_event_mapping:
-    status: PENDING
+    status: PASS
     verification: evidence
+    evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
   api.idempotency_matrix:
-    status: PENDING
+    status: PASS
     verification: evidence
+    evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
   api.contract_traceability:
-    status: PENDING
+    status: PASS
     verification: evidence
+    evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-OPENAPI-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
   api.change_impact_analysis:
-    status: PENDING
+    status: N/A
     verification: evidence
-    note: Stable operationIds exist, but post-baseline API impact artifacts are not yet materialized.
+    note: Blueprint 0.5.4 makes this conditional after the initial API gate; ApiBlueprint has not passed that gate yet.
   api.endpoints_implemented:
     status: PASS
     verification: evidence
@@ -193,7 +203,7 @@ checks:
     status: PASS
     verification: evidence
     evidence_ids: [EVD-BLUEPRINT-EXPORT-QA]
-    note: Implementation exists; semantic audit-event mapping and audit QA remain pending separate checks.
+    note: Request-level audit implementation exists; semantic event QA remains pending.
   api.backend_tests:
     status: PASS
     verification: evidence
@@ -202,15 +212,15 @@ checks:
     status: PASS
     verification: evidence
     evidence_ids: [EVD-ARCH-CONFORMANCE-ROOT]
-    note: Root conformance passes; exported-project guardrails are tracked as an adoption improvement.
+    note: Root conformance passes; exported-project guardrails are tracked as BP-ADOPT-003.
   api.openapi:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT]
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-BPADOPT002-OPENAPI-TRACEABILITY]
   api.openapi_validation:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-CI-POSTMERGE-095]
+    evidence_ids: [EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-CI-POSTMERGE-095, EVD-BPADOPT002-TRACEABILITY-QA]
   api.postman_collection:
     status: PENDING
     verification: file
@@ -231,7 +241,7 @@ checks:
   api.contract_validation:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-BPADOPT002-TRACEABILITY-QA]
   api.security_qa:
     status: PENDING
     verification: evidence
@@ -239,7 +249,7 @@ checks:
   api.audit_qa:
     status: PENDING
     verification: evidence
-    note: Infrastructure presence is tested; event semantics and retention behavior are not yet closed.
+    note: Request-level audit infrastructure exists; operation-specific semantic event behavior and retention expectations remain open.
   ui.web_inventory:
     status: PENDING
     verification: evidence
@@ -270,40 +280,41 @@ gates:
     evaluated_at: '2026-09-23T11:39:00-03:00'
     evidence_ids: [EVD-BPAUDIT-COMPLIANCE-REVIEW, EVD-BPAUDIT-TARGET]
   requirements_ready:
-    status: BLOCKED
-    evaluated_at: '2026-09-23T11:39:00-03:00'
-    note: Traceable requirements, use cases and acceptance criteria are not yet materialized.
+    status: PASS
+    evaluated_at: '2026-09-23T12:50:00-03:00'
+    evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG, EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
   interface_scope_ready:
     status: PENDING
     evaluated_at: null
   architecture_ready:
     status: BLOCKED
-    evaluated_at: '2026-09-23T11:39:00-03:00'
-    note: Architecture implementation is strong, but formal domain/ADR/security/audit evidence is incomplete.
+    evaluated_at: '2026-09-23T12:50:00-03:00'
+    note: Domain/ADR/security evidence, audit retention and explicit API versioning policy remain incomplete.
   api_contract_ready:
     status: BLOCKED
-    evaluated_at: '2026-09-23T11:39:00-03:00'
-    note: Permission, audit-event, idempotency and requirement traceability matrices remain open.
+    evaluated_at: '2026-09-23T12:50:00-03:00'
+    evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-OPENAPI-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
+    note: Required contract checks are complete, but Blueprint sequencing does not allow this gate to pass while architecture_ready remains blocked.
   api_implemented:
     status: PASS
     evaluated_at: '2026-09-23T11:39:00-03:00'
     evidence_ids: [EVD-CI-POSTMERGE-095, EVD-ARCH-CONFORMANCE-ROOT, EVD-GENERATED-SOLUTION-ACCEPTANCE]
   openapi_valid:
     status: PASS
-    evaluated_at: '2026-09-23T11:39:00-03:00'
-    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+    evaluated_at: '2026-09-23T12:50:00-03:00'
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-BPADOPT002-OPENAPI-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
   postman_ready:
     status: BLOCKED
     evaluated_at: '2026-09-23T11:39:00-03:00'
     note: No canonical Postman collection, environment or coverage evidence exists in the reviewed baseline.
   api_qa_pass:
     status: BLOCKED
-    evaluated_at: '2026-09-23T11:39:00-03:00'
-    note: Positive/negative and contract QA are strong; complete security and semantic audit QA remain open.
+    evaluated_at: '2026-09-23T12:50:00-03:00'
+    note: Positive/negative and contract QA are strong; complete security QA and semantic audit QA remain open.
   api_gate:
     status: BLOCKED
-    evaluated_at: '2026-09-23T11:39:00-03:00'
-    note: Requirements, architecture evidence, API contract matrices, Postman and audit/security QA prerequisites remain open.
+    evaluated_at: '2026-09-23T12:50:00-03:00'
+    note: Architecture evidence, Postman, complete security QA and semantic audit QA remain open prerequisites.
   interface_inventory_ready:
     status: PENDING
     evaluated_at: null
@@ -351,3 +362,18 @@ artifacts:
   - id: EVD-BPAUDIT-COMPLIANCE-REVIEW
     type: file
     value: .blueprint/compliance-review.json
+  - id: EVD-BPADOPT002-REQUIREMENTS-CATALOG
+    type: file
+    value: config/blueprint_requirements.php
+  - id: EVD-BPADOPT002-FEATURE-TRACEABILITY
+    type: file
+    value: config/blueprint.php
+  - id: EVD-BPADOPT002-OPENAPI-TRACEABILITY
+    type: file
+    value: app/Application/Blueprint/Queries/GetTraceableMasterOpenApi.php
+  - id: EVD-BPADOPT002-TRACEABILITY-QA
+    type: test_report
+    value: tests/Feature/BlueprintTraceabilityContractTest.php
+  - id: EVD-BPADOPT002-DOCUMENTATION
+    type: file
+    value: docs/delivery/requirements-traceability.md
