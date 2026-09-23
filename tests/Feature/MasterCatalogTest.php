@@ -37,10 +37,14 @@ final class MasterCatalogTest extends TestCase
         $this->assertTrue($features['users.show']['exportable']);
         $this->assertTrue($features['users.show']['openapi_ready']);
         $this->assertTrue($features['users.show']['tests_ready']);
+        $this->assertSame('implemented', $features['users.create']['implementation_status']);
+        $this->assertTrue($features['users.create']['exportable']);
+        $this->assertTrue($features['users.create']['openapi_ready']);
+        $this->assertTrue($features['users.create']['tests_ready']);
 
         $saas = collect($response->json('applications'))->firstWhere('id', 'saas');
         $this->assertSame('partial', $saas['status']);
-        $this->assertSame(['implemented' => 4, 'total' => 8], $saas['coverage']);
+        $this->assertSame(['implemented' => 5, 'total' => 8], $saas['coverage']);
 
         $commerce = collect($response->json('applications'))->firstWhere('id', 'commerce');
         $this->assertSame('partial', $commerce['status']);
@@ -97,6 +101,12 @@ final class MasterCatalogTest extends TestCase
         $this->assertSame([['bearerAuth' => []]], $paths['/api/v1/users']['get']['security']);
         $this->assertArrayHasKey('403', $paths['/api/v1/users']['get']['responses']);
         $this->assertSame('#/components/schemas/UserData', $paths['/api/v1/users']['get']['responses']['200']['content']['application/json']['schema']['properties']['data']['items']['$ref']);
+        $this->assertSame('users.create', $paths['/api/v1/users']['post']['x-apiblueprint-feature-id']);
+        $this->assertSame([['bearerAuth' => []]], $paths['/api/v1/users']['post']['security']);
+        $this->assertSame('#/components/schemas/CreateUserRequest', $paths['/api/v1/users']['post']['requestBody']['content']['application/json']['schema']['$ref']);
+        $this->assertArrayHasKey('201', $paths['/api/v1/users']['post']['responses']);
+        $this->assertArrayHasKey('403', $paths['/api/v1/users']['post']['responses']);
+        $this->assertArrayHasKey('422', $paths['/api/v1/users']['post']['responses']);
         $this->assertSame('users.show', $paths['/api/v1/users/{id}']['get']['x-apiblueprint-feature-id']);
         $this->assertSame([['bearerAuth' => []]], $paths['/api/v1/users/{id}']['get']['security']);
         $this->assertSame('#/components/schemas/UserData', $paths['/api/v1/users/{id}']['get']['responses']['200']['content']['application/json']['schema']['properties']['data']['$ref']);
