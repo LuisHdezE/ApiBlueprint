@@ -13,23 +13,30 @@ final class GeneratedProductListVerticalSliceExportTest extends TestCase
 
         $controller = $this->entry($zip, 'product-list-api/app/Presentation/Http/Controllers/Generated/ProductsListController.php');
         $repository = $this->entry($zip, 'product-list-api/app/Infrastructure/Products/DatabaseProductListRepository.php');
-        $validator = $this->entry($zip, 'product-list-api/app/Presentation/Http/Support/ProductListQueryValidator.php');
+        $validator = $this->entry($zip, 'product-list-api/app/Presentation/Http/Support/ListQueryValidator.php');
+        $paginator = $this->entry($zip, 'product-list-api/app/Infrastructure/Database/DatabaseQueryPaginator.php');
         $openApi = $this->entry($zip, 'product-list-api/openapi/openapi.yaml');
         $composer = $this->entry($zip, 'product-list-api/composer.json');
         $generatedTest = $this->entry($zip, 'product-list-api/tests/Feature/ProductsListVerticalSliceTest.php');
 
         $this->assertStringContainsString('ListProducts', $controller);
         $this->assertStringContainsString('QueryOptionsParser', $controller);
+        $this->assertStringContainsString('ListQueryValidator', $controller);
         $this->assertStringNotContainsString("'status' => 501", $controller);
 
-        $this->assertStringContainsString('cursorPage', $repository);
-        $this->assertStringContainsString('applyCursor', $repository);
-        $this->assertStringContainsString('offsetPage', $repository);
+        $this->assertStringContainsString('DatabaseQueryPaginator', $repository);
+        $this->assertStringNotContainsString('cursorPage', $repository);
+        $this->assertStringNotContainsString('offsetPage', $repository);
+        $this->assertStringContainsString('final class DatabaseQueryPaginator', $paginator);
+        $this->assertStringContainsString('cursorPage', $paginator);
+        $this->assertStringContainsString('applyCursor', $paginator);
+        $this->assertStringContainsString('offsetPage', $paginator);
         $this->assertStringContainsString("'array:size,cursor'", $validator);
 
         $this->assertStringContainsString("'200':", $openApi);
         $this->assertStringContainsString("'422':", $openApi);
-        $this->assertStringContainsString('ProductListMeta:', $openApi);
+        $this->assertStringContainsString('ListMeta:', $openApi);
+        $this->assertStringNotContainsString('ProductListMeta:', $openApi);
         $this->assertStringContainsString('page[cursor]', $openApi);
         $this->assertStringContainsString('filter[id]', $openApi);
         $this->assertStringContainsString('filter[name]', $openApi);
@@ -44,11 +51,14 @@ final class GeneratedProductListVerticalSliceExportTest extends TestCase
         $this->assertNotFalse($zip->locateName('product-list-api/app/Application/Products/UseCases/ListProducts.php'));
         $this->assertNotFalse($zip->locateName('product-list-api/database/migrations/2026_01_01_000000_create_products_table.php'));
 
+        $this->assertFalse($zip->locateName('product-list-api/app/Presentation/Http/Support/ProductListQueryValidator.php'));
         $this->assertFalse($zip->locateName('product-list-api/app/Application/Products/Contracts/ProductReadRepository.php'));
         $this->assertFalse($zip->locateName('product-list-api/app/Application/Products/UseCases/GetProduct.php'));
         $this->assertFalse($zip->locateName('product-list-api/app/Infrastructure/Products/DatabaseProductReadRepository.php'));
         $this->assertFalse($zip->locateName('product-list-api/app/Presentation/Http/Controllers/Generated/ProductsShowController.php'));
         $this->assertFalse($zip->locateName('product-list-api/tests/Feature/ProductsShowVerticalSliceTest.php'));
+        $this->assertFalse($zip->locateName('product-list-api/app/Application/Users/Contracts/UserListRepository.php'));
+        $this->assertFalse($zip->locateName('product-list-api/app/Infrastructure/Users/DatabaseUserListRepository.php'));
 
         $zip->close();
     }
@@ -57,11 +67,13 @@ final class GeneratedProductListVerticalSliceExportTest extends TestCase
     {
         $zip = $this->export($this->manifest('offset'));
 
-        $validator = $this->entry($zip, 'product-list-api/app/Presentation/Http/Support/ProductListQueryValidator.php');
+        $validator = $this->entry($zip, 'product-list-api/app/Presentation/Http/Support/ListQueryValidator.php');
+        $paginator = $this->entry($zip, 'product-list-api/app/Infrastructure/Database/DatabaseQueryPaginator.php');
         $openApi = $this->entry($zip, 'product-list-api/openapi/openapi.yaml');
         $generatedTest = $this->entry($zip, 'product-list-api/tests/Feature/ProductsListVerticalSliceTest.php');
 
         $this->assertStringContainsString("'array:size,number'", $validator);
+        $this->assertStringContainsString('offsetPage', $paginator);
         $this->assertStringContainsString('page[number]', $openApi);
         $this->assertStringContainsString('type: integer', $openApi);
         $this->assertStringNotContainsString('page[cursor]', $openApi);
