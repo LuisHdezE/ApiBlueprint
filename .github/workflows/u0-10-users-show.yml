@@ -1,0 +1,37 @@
+name: U0.10 temporary exporter patch
+
+on:
+  push:
+    branches:
+      - feature/u0-10-users-show
+    paths:
+      - scripts/u0-10-users-show.py
+      - .github/workflows/u0-10-users-show.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feature/u0-10-users-show
+          fetch-depth: 0
+      - name: Apply exporter patch
+        run: python3 scripts/u0-10-users-show.py
+      - name: Validate exporter syntax
+        run: php -l app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php
+      - name: Commit exporter patch
+        run: |
+          if git diff --quiet -- app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php; then
+            echo "No exporter changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php
+          git commit -m "feat(u0.10): generate canonical users.show slice"
+          git push origin HEAD:feature/u0-10-users-show
