@@ -39,6 +39,16 @@ Requisitos principales:
 - extensión PHP `zip`, necesaria para exportar soluciones;
 - `storage` y `bootstrap/cache` escribibles por PHP.
 
+### Provisionamiento inicial
+
+Antes del primer smoke que atraviesa el stack web de Laravel, el directorio raíz de la aplicación debe disponer de un `.env` persistente basado en `deployment/production.env.example`.
+
+La `APP_KEY` debe generarse fuera del repositorio y conservarse como secreto del entorno. No debe copiarse a GitHub, documentación, logs de CI ni comentarios de PR.
+
+El release FTP excluye `.env` de forma deliberada. Esa exclusión evita sobrescribir secretos durante promociones posteriores, pero también significa que el primer deployment no puede fabricar por sí solo una configuración productiva inexistente.
+
+La ausencia de `APP_KEY` puede permitir que endpoints API que no requieren el encrypter respondan correctamente mientras rutas del stack web fallan con `Illuminate\Encryption\MissingAppKeyException`. Por eso el smoke exige validar tanto `/api/v1/meta/status` como la landing `/`.
+
 ## Promoción
 
 La promoción se ejecuta moviendo `deploy/production` a un commit aprobado que ya pertenezca a la historia de `main`.
@@ -66,6 +76,8 @@ El deployment solo se considera aceptado cuando pasan estas comprobaciones:
 - `POST /api/v1/blueprint/export` genera un ZIP válido usando `deployment/smoke-manifest.json`.
 
 La última prueba confirma además que la extensión `zip` funciona realmente en producción.
+
+La evidencia manual o automatizada del smoke debe registrar el SHA validado sin incluir secretos. El cierre inicial de U0.4 se conserva en `docs/delivery/production-runtime-acceptance.md` y `.blueprint/evidence/u0-4-production-runtime.json`.
 
 ## Evidencia de release
 
