@@ -23,21 +23,24 @@ final class BlueprintExportTest extends TestCase
         $this->assertSame('public', $response->json('endpoints.0.exposure'));
     }
 
-    public function test_protected_surface_rejects_missing_authentication_strategy(): void
+    public function test_protected_surface_with_canonical_login_reconciles_missing_authentication_strategy(): void
     {
         $manifest = $this->manifest([
             ['id' => 'customers.list', 'exposure' => 'authenticated'],
         ]);
         $manifest['governance']['authentication'] = 'none';
 
-        $response = $this->postJson('/api/v1/blueprint/resolve', $manifest)
-            ->assertStatus(422)
-            ->assertJsonPath('title', 'Manifest de ApiBlueprint no válido');
-
-        $this->assertSame(
-            'La superficie seleccionada contiene endpoints protegidos y requiere una estrategia de autenticación.',
-            $response->json('errors')['governance.authentication'][0] ?? null,
-        );
+        $this->postJson('/api/v1/blueprint/resolve', $manifest)
+            ->assertOk()
+            ->assertJsonPath('endpoints.0.id', 'auth.login')
+            ->assertJsonPath('endpoints.0.auto_added', true)
+            ->assertJsonPath('endpoints.1.id', 'customers.list')
+            ->assertJsonPath('governance.authentication', 'sanctum')
+            ->assertJsonPath('resolution.governance_adjustments.0.capability', 'authentication')
+            ->assertJsonPath(
+                'resolution.governance_adjustments.0.reason',
+                'El inicio de sesión requiere Laravel Sanctum como estrategia de autenticación.',
+            );
     }
 
     public function test_privileged_surface_requires_rbac(): void

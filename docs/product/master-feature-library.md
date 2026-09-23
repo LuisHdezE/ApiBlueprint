@@ -53,7 +53,15 @@ Estados iniciales de feature:
 - `in_progress`: trabajo iniciado pero todavía no disponible como pieza terminada;
 - `planned`: registrada, pero aún no implementada.
 
-`products.list` y `products.show` son las primeras features marcadas como `implemented` dentro de esta biblioteca.
+Las primeras features ejecutables de la biblioteca son:
+
+- `products.list`;
+- `products.show`;
+- `auth.login`.
+
+`auth.login` es una única feature canónica compartida por SaaS, Commerce y cualquier aplicación futura que necesite autenticación. Exporta usuario e identidad mínimos reutilizables, un puerto de Application, adaptador Laravel Sanctum, validación HTTP, migraciones, contrato OpenAPI y tests reales de emisión de token. No se crea un login independiente por tipo de aplicación.
+
+Cuando una composición selecciona `auth.login`, la estrategia `authentication=none` se reconcilia a `sanctum` y el ajuste queda registrado en el manifest resuelto.
 
 ## 4. Ingreso de nuevas aplicaciones mediante imagen + descripción
 
@@ -92,11 +100,11 @@ Permite seleccionar un tipo de aplicación y las features que formarán una nuev
 
 `/swagger` consume `GET /api/v1/blueprint/openapi` y muestra las features implementadas cuyo contrato OpenAPI está listo.
 
-Swagger no es documentación de cierre: se actualiza en el mismo cambio que termina una feature.
+Swagger no es documentación de cierre: se actualiza en el mismo cambio que termina una feature. `auth.login` publica su request body, respuesta con token Bearer y errores 401/422 desde el mismo checkpoint que lo vuelve ejecutable.
 
 ## 6. Compatibilidad con el motor actual
 
-Durante U0.7, `applications` y `features` son la fuente canónica nueva. Las colecciones históricas `templates` y `endpoints` continúan disponibles como proyecciones de compatibilidad para el resolver y el exportador existentes.
+Desde U0.7, `applications` y `features` son la fuente canónica. Las colecciones históricas `templates` y `endpoints` continúan disponibles como proyecciones de compatibilidad para el resolver y el exportador existentes.
 
 Esto permite evolucionar el modelo sin romper el manifest v0.3 ni las soluciones de aceptación actuales.
 
@@ -104,7 +112,7 @@ Esto permite evolucionar el modelo sin romper el manifest v0.3 ni las soluciones
 
 Una feature no debe considerarse terminada únicamente porque exista un controlador.
 
-El gate objetivo exige que la misma feature quede reconciliada en:
+El gate exige que la misma feature quede reconciliada en:
 
 - implementación ejecutable;
 - dependencias y composición;
@@ -115,4 +123,4 @@ El gate objetivo exige que la misma feature quede reconciliada en:
 - compositor/exportador;
 - documentación viva.
 
-U0.7 establece la infraestructura de catálogo y las proyecciones. La aplicación estricta de `exportable=false` en el resolver/compositor se realizará de forma gobernada después de verificar compatibilidad con los presets y el acceptance de soluciones generadas.
+La aplicación estricta de `exportable=false` en el resolver/compositor se realizará de forma gobernada después de verificar compatibilidad con los presets y el acceptance de soluciones generadas.

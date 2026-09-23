@@ -94,8 +94,22 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             $files['app/Presentation/Http/Support/QueryOptionsParser.php'] = $this->queryOptionsParserFile($manifest);
         }
 
+        $hasAuthLogin = $this->hasEndpoint($manifest, 'auth.login');
         $hasProductsShow = $this->hasEndpoint($manifest, 'products.show');
         $hasProductsList = $this->hasEndpoint($manifest, 'products.list');
+
+        if ($hasAuthLogin) {
+            $files['database/database.sqlite'] = '';
+            $files['database/migrations/2026_01_01_000000_create_users_table.php'] = $this->usersMigrationFile();
+            $files['database/migrations/2026_01_01_000001_create_personal_access_tokens_table.php'] = $this->personalAccessTokensMigrationFile();
+            $files['app/Infrastructure/Identity/User.php'] = $this->userModelFile();
+            $files['app/Application/Authentication/Data/AuthenticatedSession.php'] = $this->authenticatedSessionFile();
+            $files['app/Application/Authentication/Contracts/AuthenticationGateway.php'] = $this->authenticationGatewayContractFile();
+            $files['app/Application/Authentication/UseCases/LoginUser.php'] = $this->loginUserUseCaseFile();
+            $files['app/Infrastructure/Authentication/SanctumAuthenticationGateway.php'] = $this->sanctumAuthenticationGatewayFile();
+            $files['app/Presentation/Http/Support/LoginRequestValidator.php'] = $this->loginRequestValidatorFile();
+            $files['tests/Feature/AuthLoginVerticalSliceTest.php'] = $this->authLoginVerticalSliceTestFile();
+        }
 
         if ($hasProductsShow || $hasProductsList) {
             $files['database/database.sqlite'] = '';
@@ -163,7 +177,7 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             'phpunit/phpunit' => '^12.5',
         ];
 
-        if ($this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) {
+        if ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) {
             $requireDev['mockery/mockery'] = '^1.6';
         }
 
@@ -363,6 +377,9 @@ PHP;
 
     private function controllerFile(array $endpoint, string $className): string
     {
+        if ($endpoint['id'] === 'auth.login') {
+            return $this->authLoginControllerFile($className);
+        }
         if ($endpoint['id'] === 'products.list') {
             return $this->productsListControllerFile($className);
         }
@@ -688,6 +705,11 @@ PHP;
         $bootLines = [];
         $governance = $manifest['governance'];
 
+        if ($this->hasEndpoint($manifest, 'auth.login')) {
+            $imports[] = 'use App\\Application\\Authentication\\Contracts\\AuthenticationGateway;';
+            $imports[] = 'use App\\Infrastructure\\Authentication\\SanctumAuthenticationGateway;';
+            $registerLines[] = '        $this->app->bind(AuthenticationGateway::class, SanctumAuthenticationGateway::class);';
+        }
         if ($this->hasEndpoint($manifest, 'products.show')) {
             $imports[] = 'use App\\Application\\Products\\Contracts\\ProductReadRepository;';
             $imports[] = 'use App\\Infrastructure\\Products\\DatabaseProductReadRepository;';
@@ -794,7 +816,7 @@ PHP;
 
         $stubEndpoints = array_values(array_filter(
             $manifest['endpoints'],
-            static fn (array $endpoint): bool => ! in_array($endpoint['id'], ['products.list', 'products.show'], true),
+            static fn (array $endpoint): bool => ! in_array($endpoint['id'], ['auth.login', 'products.list', 'products.show'], true),
         ));
 
         if ($stubEndpoints === []) {
@@ -887,7 +909,7 @@ PHP;
 
     private function phpUnitFile(array $manifest): string
     {
-        $databaseEnvironment = ($this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list'))
+        $databaseEnvironment = ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list'))
             ? "        <env name=\"DB_CONNECTION\" value=\"sqlite\"/>\n        <env name=\"DB_DATABASE\" value=\":memory:\"/>\n"
             : '';
 
@@ -942,6 +964,14 @@ XML;
                         $lines[] = '        - bearerAuth: []';
                     }
 
+                    if ($endpoint['id'] === 'auth.login') {
+                        $lines[] = '      requestBody:';
+                        $lines[] = '        required: true';
+                        $lines[] = '        content:';
+                        $lines[] = '          application/json:';
+                        $lines[] = '            schema: { $ref: "#/components/schemas/AuthLoginRequest" }';
+                    }
+
                     $parameters = [];
                     if (preg_match_all('/\{([^}]+)\}/', $endpoint['path'], $matches) > 0) {
                         foreach ($matches[1] as $parameterName) {
@@ -976,7 +1006,17 @@ XML;
                     }
 
                     $lines[] = '      responses:';
-                    if ($endpoint['id'] === 'products.list') {
+                    if ($endpoint['id'] === 'auth.login') {
+                        $lines[] = "        '200':";
+                        $lines[] = '          description: "Sesión iniciada correctamente."';
+                        $lines[] = '          content: { application/json: { schema: { $ref: "#/components/schemas/AuthLoginResponse" } } }';
+                        $lines[] = "        '401':";
+                        $lines[] = '          description: "Credenciales inválidas."';
+                        $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
+                        $lines[] = "        '422':";
+                        $lines[] = '          description: "Datos de inicio de sesión inválidos."';
+                        $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
+                    } elseif ($endpoint['id'] === 'products.list') {
                         $lines[] = "        '200':";
                         $lines[] = '          description: "Listado paginado de productos."';
                         $lines[] = '          content: { application/json: { schema: { type: object, required: [data, meta], properties: { data: { type: array, items: { $ref: "#/components/schemas/Product" } }, meta: { $ref: "#/components/schemas/ProductListMeta" } } } } }';
@@ -1015,6 +1055,33 @@ XML;
         $lines[] = '        detail: { type: string }';
         $lines[] = '        correlation_id: { type: string }';
 
+        if ($this->hasEndpoint($manifest, 'auth.login')) {
+            $lines[] = '    AuthLoginRequest:';
+            $lines[] = '      type: object';
+            $lines[] = '      required: [email, password]';
+            $lines[] = '      properties:';
+            $lines[] = '        email: { type: string, format: email }';
+            $lines[] = '        password: { type: string, format: password }';
+            $lines[] = '        device_name: { type: string, maxLength: 100 }';
+            $lines[] = '    AuthLoginResponse:';
+            $lines[] = '      type: object';
+            $lines[] = '      required: [data]';
+            $lines[] = '      properties:';
+            $lines[] = '        data:';
+            $lines[] = '          type: object';
+            $lines[] = '          required: [user, access_token, token_type]';
+            $lines[] = '          properties:';
+            $lines[] = '            user:';
+            $lines[] = '              type: object';
+            $lines[] = '              required: [id, name, email]';
+            $lines[] = '              properties:';
+            $lines[] = '                id: { type: string }';
+            $lines[] = '                name: { type: string }';
+            $lines[] = '                email: { type: string, format: email }';
+            $lines[] = '            access_token: { type: string }';
+            $lines[] = '            token_type: { type: string, enum: [Bearer] }';
+        }
+
         if ($this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) {
             $lines[] = '    Product:';
             $lines[] = '      type: object';
@@ -1052,14 +1119,14 @@ XML;
     {
         $rows = [];
         foreach ($manifest['endpoints'] as $endpoint) {
-            $status = in_array($endpoint['id'], ['products.list', 'products.show'], true) ? 'Ejecutable' : 'Stub 501';
+            $status = in_array($endpoint['id'], ['auth.login', 'products.list', 'products.show'], true) ? 'Ejecutable' : 'Stub 501';
             $rows[] = "| {$endpoint['method']} | `{$endpoint['path']}` | {$endpoint['summary']} | {$endpoint['exposure']} | $status |";
         }
         $table = $rows === [] ? '_No se seleccionaron endpoints._' : implode("\n", $rows);
         $governance = $manifest['governance'];
-        $migrationStep = ($this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) ? "php artisan migrate\n" : '';
+        $migrationStep = ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) ? "php artisan migrate\n" : '';
 
-        return "# {$manifest['project']['name']}\n\nSolución Laravel generada por **ApiBlueprint**. El código se mantiene en inglés; mensajes, errores y OpenAPI se presentan en español.\n\n## Gobierno exportado\n\n- Autenticación: `{$governance['authentication']}`\n- RBAC: ".($governance['rbac'] ? 'sí' : 'no')."\n- Correlation ID: ".($governance['correlation_id'] ? 'sí' : 'no')."\n- Rate limit: ".($governance['rate_limiting']['enabled'] ? $governance['rate_limiting']['requests_per_minute'].' solicitudes/minuto' : 'deshabilitado')."\n- Paginación: `{$governance['pagination']['strategy']}`\n- Idempotencia: ".($governance['idempotency'] ? 'sí' : 'no')."\n- Auditoría: ".($governance['audit'] ? 'sí' : 'no')."\n\n## Endpoints exportados\n\n| Método | Ruta | Descripción | Exposición | Implementación |\n| --- | --- | --- | --- | --- |\n$table\n\n## Inicio rápido\n\n```bash\ncomposer install\ncp .env.example .env\nphp artisan key:generate\n{$migrationStep}php artisan test\nphp artisan serve\n```\n\n`products.list` y `products.show` se exportan como vertical slices ejecutables cuando están seleccionados. Los demás endpoints conservan HTTP 501 hasta que su receta ejecutable sea incorporada. Los endpoints y capacidades no seleccionados no se incluyen como infraestructura dormida.\n";
+        return "# {$manifest['project']['name']}\n\nSolución Laravel generada por **ApiBlueprint**. El código se mantiene en inglés; mensajes, errores y OpenAPI se presentan en español.\n\n## Gobierno exportado\n\n- Autenticación: `{$governance['authentication']}`\n- RBAC: ".($governance['rbac'] ? 'sí' : 'no')."\n- Correlation ID: ".($governance['correlation_id'] ? 'sí' : 'no')."\n- Rate limit: ".($governance['rate_limiting']['enabled'] ? $governance['rate_limiting']['requests_per_minute'].' solicitudes/minuto' : 'deshabilitado')."\n- Paginación: `{$governance['pagination']['strategy']}`\n- Idempotencia: ".($governance['idempotency'] ? 'sí' : 'no')."\n- Auditoría: ".($governance['audit'] ? 'sí' : 'no')."\n\n## Endpoints exportados\n\n| Método | Ruta | Descripción | Exposición | Implementación |\n| --- | --- | --- | --- | --- |\n$table\n\n## Inicio rápido\n\n```bash\ncomposer install\ncp .env.example .env\nphp artisan key:generate\n{$migrationStep}php artisan test\nphp artisan serve\n```\n\n`auth.login`, `products.list` y `products.show` se exportan como vertical slices ejecutables cuando están seleccionados. Los demás endpoints conservan HTTP 501 hasta que su receta ejecutable sea incorporada. Los endpoints y capacidades no seleccionados no se incluyen como infraestructura dormida.\n";
     }
 
     private function controllerClassName(string $endpointId): string
@@ -1078,6 +1145,361 @@ XML;
         }
 
         return false;
+    }
+
+    private function authLoginControllerFile(string $className): string
+    {
+        return <<<PHP
+<?php
+
+namespace App\Presentation\Http\Controllers\Generated;
+
+use App\Application\Authentication\UseCases\LoginUser;
+use App\Presentation\Http\Support\LoginRequestValidator;
+use App\Presentation\Http\Support\ProblemDetails;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+final readonly class $className
+{
+    public function __construct(
+        private LoginUser \$loginUser,
+        private LoginRequestValidator \$validator,
+    ) {
+        //
+    }
+
+    public function __invoke(Request \$request): JsonResponse
+    {
+        \$credentials = \$this->validator->validate(\$request);
+        \$session = \$this->loginUser->handle(
+            email: \$credentials['email'],
+            password: \$credentials['password'],
+            tokenName: \$credentials['device_name'] ?? 'api-client',
+        );
+
+        if (\$session === null) {
+            return ProblemDetails::response(
+                request: \$request,
+                status: 401,
+                title: 'Credenciales inválidas',
+                detail: 'El correo electrónico o la contraseña no son correctos.',
+                type: 'https://eliasworks.uy/problems/invalid-credentials',
+            );
+        }
+
+        return response()->json(['data' => \$session->toArray()]);
+    }
+}
+PHP;
+    }
+
+    private function loginRequestValidatorFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Presentation\Http\Support;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
+final class LoginRequestValidator
+{
+    public function validate(Request $request): array
+    {
+        return Validator::make($request->all(), [
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
+            'device_name' => ['sometimes', 'string', 'max:100'],
+        ], [
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'El correo electrónico no tiene un formato válido.',
+            'password.required' => 'La contraseña es obligatoria.',
+            'device_name.max' => 'El nombre del dispositivo no puede superar 100 caracteres.',
+        ])->validate();
+    }
+}
+PHP;
+    }
+
+    private function authenticatedSessionFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Authentication\Data;
+
+final readonly class AuthenticatedSession
+{
+    public function __construct(
+        public string $userId,
+        public string $name,
+        public string $email,
+        public string $accessToken,
+    ) {
+        //
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'user' => [
+                'id' => $this->userId,
+                'name' => $this->name,
+                'email' => $this->email,
+            ],
+            'access_token' => $this->accessToken,
+            'token_type' => 'Bearer',
+        ];
+    }
+}
+PHP;
+    }
+
+    private function authenticationGatewayContractFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Authentication\Contracts;
+
+use App\Application\Authentication\Data\AuthenticatedSession;
+
+interface AuthenticationGateway
+{
+    public function authenticate(string $email, string $password, string $tokenName): ?AuthenticatedSession;
+}
+PHP;
+    }
+
+    private function loginUserUseCaseFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Authentication\UseCases;
+
+use App\Application\Authentication\Contracts\AuthenticationGateway;
+use App\Application\Authentication\Data\AuthenticatedSession;
+
+final readonly class LoginUser
+{
+    public function __construct(private AuthenticationGateway $authentication)
+    {
+        //
+    }
+
+    public function handle(string $email, string $password, string $tokenName): ?AuthenticatedSession
+    {
+        return $this->authentication->authenticate(
+            email: mb_strtolower(trim($email)),
+            password: $password,
+            tokenName: trim($tokenName) === '' ? 'api-client' : trim($tokenName),
+        );
+    }
+}
+PHP;
+    }
+
+    private function sanctumAuthenticationGatewayFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Infrastructure\Authentication;
+
+use App\Application\Authentication\Contracts\AuthenticationGateway;
+use App\Application\Authentication\Data\AuthenticatedSession;
+use App\Infrastructure\Identity\User;
+use Illuminate\Support\Facades\Hash;
+
+final class SanctumAuthenticationGateway implements AuthenticationGateway
+{
+    public function authenticate(string $email, string $password, string $tokenName): ?AuthenticatedSession
+    {
+        $user = User::query()->where('email', $email)->first();
+        if ($user === null || ! Hash::check($password, (string) $user->password)) {
+            return null;
+        }
+
+        $token = $user->createToken($tokenName);
+
+        return new AuthenticatedSession(
+            userId: (string) $user->getKey(),
+            name: (string) $user->name,
+            email: (string) $user->email,
+            accessToken: $token->plainTextToken,
+        );
+    }
+}
+PHP;
+    }
+
+    private function userModelFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Infrastructure\Identity;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+
+final class User extends Authenticatable
+{
+    use HasApiTokens;
+
+    protected $table = 'users';
+
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+    ];
+
+    protected $hidden = [
+        'password',
+    ];
+}
+PHP;
+    }
+
+    private function usersMigrationFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->string('role')->default('user');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('users');
+    }
+};
+PHP;
+    }
+
+    private function personalAccessTokensMigrationFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('personal_access_tokens', function (Blueprint $table): void {
+            $table->id();
+            $table->morphs('tokenable');
+            $table->text('name');
+            $table->string('token', 64)->unique();
+            $table->text('abilities')->nullable();
+            $table->timestamp('last_used_at')->nullable();
+            $table->timestamp('expires_at')->nullable()->index();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('personal_access_tokens');
+    }
+};
+PHP;
+    }
+
+    private function authLoginVerticalSliceTestFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace Tests\Feature;
+
+use App\Infrastructure\Identity\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\PersonalAccessToken;
+use Tests\TestCase;
+
+final class AuthLoginVerticalSliceTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_user_can_login_and_receive_a_real_sanctum_token(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Usuario de prueba',
+            'email' => 'user@example.com',
+            'password' => Hash::make('secret-password'),
+        ]);
+
+        $response = $this->postJson('/api/v1/auth/login', [
+            'email' => 'USER@example.com',
+            'password' => 'secret-password',
+            'device_name' => 'integration-test',
+        ])->assertOk()
+            ->assertJsonPath('data.user.id', (string) $user->getKey())
+            ->assertJsonPath('data.user.email', 'user@example.com')
+            ->assertJsonPath('data.token_type', 'Bearer');
+
+        $plainTextToken = $response->json('data.access_token');
+        $this->assertIsString($plainTextToken);
+        $this->assertNotSame('', $plainTextToken);
+
+        $storedToken = PersonalAccessToken::findToken($plainTextToken);
+        $this->assertNotNull($storedToken);
+        $this->assertSame((string) $user->getKey(), (string) $storedToken->tokenable_id);
+    }
+
+    public function test_invalid_credentials_use_problem_details(): void
+    {
+        User::query()->create([
+            'name' => 'Usuario de prueba',
+            'email' => 'user@example.com',
+            'password' => Hash::make('correct-password'),
+        ]);
+
+        $this->postJson('/api/v1/auth/login', [
+            'email' => 'user@example.com',
+            'password' => 'wrong-password',
+        ])->assertStatus(401)
+            ->assertHeader('content-type', 'application/problem+json')
+            ->assertJsonPath('title', 'Credenciales inválidas');
+    }
+
+    public function test_login_validates_required_credentials_in_spanish(): void
+    {
+        $this->postJson('/api/v1/auth/login', [])
+            ->assertStatus(422)
+            ->assertHeader('content-type', 'application/problem+json')
+            ->assertJsonPath('title', 'Error de validación')
+            ->assertJsonPath('errors.email.0', 'El correo electrónico es obligatorio.')
+            ->assertJsonPath('errors.password.0', 'La contraseña es obligatoria.');
+    }
+}
+PHP;
     }
 
     private function productsListControllerFile(string $className): string

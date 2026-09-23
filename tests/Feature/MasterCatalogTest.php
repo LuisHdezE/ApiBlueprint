@@ -21,11 +21,14 @@ final class MasterCatalogTest extends TestCase
         $this->assertTrue($features['products.list']['openapi_ready']);
         $this->assertTrue($features['products.list']['tests_ready']);
         $this->assertSame('implemented', $features['products.show']['implementation_status']);
-        $this->assertSame('planned', $features['auth.login']['implementation_status']);
+        $this->assertSame('implemented', $features['auth.login']['implementation_status']);
+        $this->assertTrue($features['auth.login']['exportable']);
+        $this->assertTrue($features['auth.login']['openapi_ready']);
+        $this->assertTrue($features['auth.login']['tests_ready']);
 
         $commerce = collect($response->json('applications'))->firstWhere('id', 'commerce');
         $this->assertSame('partial', $commerce['status']);
-        $this->assertSame(['implemented' => 2, 'total' => 9], $commerce['coverage']);
+        $this->assertSame(['implemented' => 3, 'total' => 9], $commerce['coverage']);
     }
 
     public function test_every_application_reuses_unique_canonical_feature_ids(): void
@@ -69,8 +72,9 @@ final class MasterCatalogTest extends TestCase
 
         $this->assertSame('products.list', $paths['/api/v1/products']['get']['x-apiblueprint-feature-id']);
         $this->assertSame('products.show', $paths['/api/v1/products/{id}']['get']['x-apiblueprint-feature-id']);
-        $this->assertArrayNotHasKey('/api/v1/auth/login', $paths);
-        $this->assertCount(2, $paths);
+        $this->assertSame('auth.login', $paths['/api/v1/auth/login']['post']['x-apiblueprint-feature-id']);
+        $this->assertSame('#/components/schemas/AuthLoginRequest', $paths['/api/v1/auth/login']['post']['requestBody']['content']['application/json']['schema']['$ref']);
+        $this->assertCount(3, $paths);
     }
 
     public function test_catalog_administration_and_swagger_views_are_available(): void

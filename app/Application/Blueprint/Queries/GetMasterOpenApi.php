@@ -42,6 +42,17 @@ final readonly class GetMasterOpenApi
                 'responses' => $this->responsesFor($feature),
             ];
 
+            if ($feature['id'] === 'auth.login') {
+                $operation['requestBody'] = [
+                    'required' => true,
+                    'content' => [
+                        'application/json' => [
+                            'schema' => ['$ref' => '#/components/schemas/AuthLoginRequest'],
+                        ],
+                    ],
+                ];
+            }
+
             if ($feature['default_exposure'] !== 'public') {
                 $operation['security'] = [['bearerAuth' => []]];
             }
@@ -75,10 +86,42 @@ final readonly class GetMasterOpenApi
                     'bearerAuth' => [
                         'type' => 'http',
                         'scheme' => 'bearer',
-                        'bearerFormat' => 'JWT',
+                        'bearerFormat' => 'Sanctum personal access token',
                     ],
                 ],
                 'schemas' => [
+                    'AuthLoginRequest' => [
+                        'type' => 'object',
+                        'required' => ['email', 'password'],
+                        'properties' => [
+                            'email' => ['type' => 'string', 'format' => 'email'],
+                            'password' => ['type' => 'string', 'format' => 'password'],
+                            'device_name' => ['type' => 'string', 'maxLength' => 100],
+                        ],
+                    ],
+                    'AuthLoginResponse' => [
+                        'type' => 'object',
+                        'required' => ['data'],
+                        'properties' => [
+                            'data' => [
+                                'type' => 'object',
+                                'required' => ['user', 'access_token', 'token_type'],
+                                'properties' => [
+                                    'user' => [
+                                        'type' => 'object',
+                                        'required' => ['id', 'name', 'email'],
+                                        'properties' => [
+                                            'id' => ['type' => 'string'],
+                                            'name' => ['type' => 'string'],
+                                            'email' => ['type' => 'string', 'format' => 'email'],
+                                        ],
+                                    ],
+                                    'access_token' => ['type' => 'string'],
+                                    'token_type' => ['type' => 'string', 'enum' => ['Bearer']],
+                                ],
+                            ],
+                        ],
+                    ],
                     'ProblemDetails' => [
                         'type' => 'object',
                         'required' => ['type', 'title', 'status'],
@@ -141,6 +184,23 @@ final readonly class GetMasterOpenApi
 
     private function responsesFor(array $feature): array
     {
+        if ($feature['id'] === 'auth.login') {
+            return [
+                '200' => [
+                    'description' => 'Sesión iniciada correctamente.',
+                    'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/AuthLoginResponse']]],
+                ],
+                '401' => [
+                    'description' => 'Credenciales inválidas.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+                '422' => [
+                    'description' => 'Datos de inicio de sesión inválidos.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+            ];
+        }
+
         if (str_ends_with($feature['id'], '.list')) {
             return [
                 '200' => ['description' => 'Listado obtenido correctamente.'],

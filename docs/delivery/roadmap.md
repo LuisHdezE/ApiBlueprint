@@ -106,11 +106,11 @@ Integrado por PR #6 con CI pre-merge y post-merge verdes.
 
 Integrado por PR #7 con CI verde.
 
-Estas dos implementaciones constituyen las primeras features reales de la biblioteca maestra. U0.6 no se continúa como una secuencia manual de endpoints: primero se formaliza el sistema que permitirá escalar la biblioteca sin duplicación ni conocimiento disperso en el exportador.
+Estas dos implementaciones constituyeron las primeras features reales de la biblioteca maestra.
 
-## U0.7 - Master Feature Library + Application Catalog 🚧
+## U0.7 - Master Feature Library + Application Catalog ✅
 
-Objetivo: convertir ApiBlueprint en una fábrica gobernada por una única biblioteca creciente de funcionalidades implementadas y un catálogo de tipos de aplicación que las compone por referencia.
+U0.7 formalizó el modelo de producto que gobierna el crecimiento de ApiBlueprint.
 
 ### Reglas de producto
 
@@ -121,9 +121,9 @@ Objetivo: convertir ApiBlueprint en una fábrica gobernada por una única biblio
 - las aplicaciones pueden tener cobertura `ready`, `partial` o `planned`;
 - imagen + descripción + contexto funcional forman la entrada habitual para analizar nuevas aplicaciones;
 - la inferencia separa lo observado, lo inferido y lo pendiente de definición;
-- Catálogo administrativo, Swagger y Compositor deben ser proyecciones sincronizadas de la misma fuente canónica.
+- Catálogo administrativo, Swagger y Compositor son proyecciones sincronizadas de la misma fuente canónica.
 
-### Checkpoint 1 - Catalog Foundation 🚧
+### Catalog Foundation ✅
 
 - `features` como Master Feature Library canónica;
 - `applications` como Application Catalog canónico;
@@ -137,13 +137,38 @@ Objetivo: convertir ApiBlueprint en una fábrica gobernada por una única biblio
 - Swagger UI en `/swagger` mostrando solo features implementadas y OpenAPI-ready;
 - documentación en `docs/product/master-feature-library.md`.
 
+Integrado por PR #8 con CI pre-merge y post-merge verdes.
+
+## U0.8 - Authentication Library 🚧
+
+Objetivo: comenzar a ampliar la biblioteca sobre la fundación U0.7 con una capacidad transversal de alta reutilización y una sola implementación canónica compartida por todas las aplicaciones.
+
+### Checkpoint 1 - `auth.login` 🚧
+
+- una única feature `auth.login` reutilizada por SaaS, Commerce y aplicaciones futuras;
+- `AuthenticationGateway` como puerto de Application;
+- `LoginUser` como caso de uso independiente de Laravel;
+- `SanctumAuthenticationGateway` como adaptador de Infrastructure;
+- identidad mínima compartida mediante `User` reutilizable;
+- migraciones de `users` y `personal_access_tokens` generadas únicamente cuando la composición las necesita;
+- emisión de token Laravel Sanctum real;
+- validación de email, password y device name en español;
+- 200 con usuario y token Bearer;
+- 401 RFC 9457 para credenciales inválidas;
+- 422 RFC 9457 para request inválido;
+- `authentication=none` reconciliado a `sanctum` cuando se selecciona `auth.login`;
+- OpenAPI/Swagger actualizado en el mismo checkpoint;
+- catálogo administrativo actualizado automáticamente desde el estado canónico de la feature;
+- test raíz que verifica el contenido del ZIP sin infraestructura de Products;
+- acceptance SaaS y Commerce ejecutando exactamente la misma receta de login.
+
 ### Siguientes checkpoints previstos
 
+- `auth.logout` reutilizando la misma identidad y tokens;
 - hacer que el compositor distinga claramente features implementadas, en desarrollo y pendientes;
 - impedir de forma gobernada exportar features no implementadas sin romper el acceptance histórico;
 - desacoplar las recetas de feature del exporter monolítico y convertirlas en unidades registrables;
-- incorporar cada nueva aplicación analizada al Application Catalog y reutilizar primero la biblioteca existente;
-- continuar ampliando la Master Feature Library con endpoints completos una vez estabilizada la composición.
+- continuar incorporando nuevas aplicaciones y features sin duplicación funcional.
 
 ## Destino de entrega
 
