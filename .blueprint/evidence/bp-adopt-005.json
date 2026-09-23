@@ -1,0 +1,41 @@
+{
+  "schema_version": "0.5.4",
+  "evidence": [
+    {
+      "id": "EVD-BPADOPT005-CONTRACT-BASELINE",
+      "type": "file",
+      "value": ".blueprint/api-contract-baseline.json",
+      "description": "Baseline determinística del contrato v1 con siete operationId, fingerprints por operación y revisión global independiente del SHA Git.",
+      "scope": {"level": "phase", "id": "api_contract_design"},
+      "created_at": "2026-09-23T20:16:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT005-EVOLUTION-GUARD",
+      "type": "test_report",
+      "value": "scripts/api-evolution.php",
+      "description": "Guard ejecutable que compara el Master OpenAPI con la baseline por operationId y exige un único API-IMPACT canónico cuando detecta drift.",
+      "scope": {"level": "phase", "id": "api_contract_design"},
+      "created_at": "2026-09-23T20:16:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT005-GUARD-SELFTEST",
+      "type": "test_report",
+      "value": "scripts/test-api-evolution-guard.sh",
+      "description": "Prueba reproducible de baseline estable, rechazo de drift sin gobernanza, aceptación con impacto válido y rechazo de política de revalidación inválida.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T20:16:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT005-VERSIONING-POLICY",
+      "type": "file",
+      "value": "docs/delivery/api-evolution.md",
+      "description": "Política explícita de compatibilidad /api/v1, major-version evolution, impact classification, revalidación proporcional y preservación de evidencia no relacionada.",
+      "scope": {"level": "phase", "id": "architecture_security_data"},
+      "created_at": "2026-09-23T20:16:00-03:00",
+      "producer": "mixed"
+    }
+  ]
+}
