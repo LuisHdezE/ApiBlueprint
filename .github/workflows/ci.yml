@@ -51,6 +51,17 @@ jobs:
       - name: Tests
         run: php artisan test
 
+      - name: Capture API evolution baseline candidate
+        run: php scripts/api-evolution.php capture storage/app/qa/api-contract-baseline.candidate.json 07297c9438d0efd3421e197fd8e78f4302c12c42
+
+      - name: Upload API evolution baseline candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bp-adopt-005-baseline-candidate
+          path: storage/app/qa/api-contract-baseline.candidate.json
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Route contract smoke
         run: php artisan route:list --path=api/v1
 
