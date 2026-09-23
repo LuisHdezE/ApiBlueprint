@@ -120,9 +120,9 @@ checks:
     status: PENDING
     verification: evidence
   architecture.threat_model:
-    status: N/A
+    status: PENDING
     verification: evidence
-    note: Applicability has not been established for the current adoption baseline.
+    note: Applicability decision is still pending for the current adoption baseline.
   data.architecture:
     status: N/A
     verification: evidence
@@ -149,9 +149,9 @@ checks:
     verification: evidence
     evidence_ids: [EVD-GOVERNED-RUNTIME-QA]
   api.versioning_policy:
-    status: PASS
+    status: PENDING
     verification: evidence
-    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT]
+    note: Current routes use /api/v1, but an explicit versioning and compatibility policy has not yet been materialized.
   api.scope_defined:
     status: PASS
     verification: evidence
