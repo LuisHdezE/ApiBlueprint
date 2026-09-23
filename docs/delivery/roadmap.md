@@ -68,13 +68,13 @@ El gate de aceptación ejecutable está integrado en `main` y exporta y prueba p
 - Blank sin rutas API seleccionadas;
 - documentación del gate en `docs/delivery/generated-solution-acceptance.md`.
 
-U0.5 cerró con PR #5 y CI post-merge verde. Los vertical slices ejecutables se desarrollan de forma incremental a partir de U0.6.
+U0.5 cerró con PR #5 y CI post-merge verde.
 
-## U0.6 - Vertical slices ejecutables 🚧
+## U0.6 - Primeras features ejecutables reutilizables ✅
 
-El objetivo es sustituir progresivamente los stubs HTTP 501 por implementaciones completas sin convertir el proyecto exportado en un megaprojecto dormido.
+U0.6 demostró que una feature seleccionada puede materializarse como vertical slice real sin generar infraestructura de otra feature no seleccionada.
 
-### Checkpoint 1: `products.show` ✅
+### `products.show` ✅
 
 - `Product` en Domain sin dependencia de Laravel;
 - `ProductReadRepository` y `GetProduct` en Application;
@@ -86,29 +86,64 @@ El objetivo es sustituir progresivamente los stubs HTTP 501 por implementaciones
 - test generado con SQLite en memoria y `RefreshDatabase`;
 - ausencia de infraestructura de listado cuando no fue seleccionada.
 
-Checkpoint integrado por PR #6 con CI pre-merge y post-merge verdes.
+Integrado por PR #6 con CI pre-merge y post-merge verdes.
 
-### Checkpoint 2: `products.list` 🚧
+### `products.list` ✅
 
 - `ProductListRepository`, `ProductPage` y `ListProducts` en Application;
 - `DatabaseProductListRepository` en Infrastructure;
 - `ProductsListController` y `ProductListQueryValidator` en Presentation;
-- cursor keyset real, no offset codificado como cursor;
+- cursor keyset real;
 - estrategia offset con `page[number]`, `total` y `total_pages`;
-- `page[size]` limitado por la gobernanza del manifest;
+- `page[size]` gobernado;
 - filtros permitidos `id` y `name`;
 - sorting determinista por `id`/`name`, con `id` como desempate estable;
 - 422 RFC 9457 para parámetros inválidos y cursores incompatibles;
-- OpenAPI 200/422, `ProductListMeta` y parámetros específicos por estrategia;
+- OpenAPI 200/422;
 - tests generados para cursor, offset, filtering, sorting y validación;
 - acceptance Commerce ejecutado en cursor y offset;
 - ausencia de infraestructura `products.show` cuando solo se selecciona el listado.
 
-Este checkpoint permanece abierto hasta obtener CI verde completo y merge aprobado.
+Integrado por PR #7 con CI verde.
 
-Los demás endpoints siguen respondiendo 501 hasta recibir su propia receta ejecutable.
+Estas dos implementaciones constituyen las primeras features reales de la biblioteca maestra. U0.6 no se continúa como una secuencia manual de endpoints: primero se formaliza el sistema que permitirá escalar la biblioteca sin duplicación ni conocimiento disperso en el exportador.
 
-Ver `docs/delivery/executable-vertical-slices.md`.
+## U0.7 - Master Feature Library + Application Catalog 🚧
+
+Objetivo: convertir ApiBlueprint en una fábrica gobernada por una única biblioteca creciente de funcionalidades implementadas y un catálogo de tipos de aplicación que las compone por referencia.
+
+### Reglas de producto
+
+- una funcionalidad se implementa una sola vez y se reutiliza entre aplicaciones;
+- antes de crear una feature se busca una equivalente existente;
+- una feature parcialmente compatible se evoluciona antes de considerar una duplicación;
+- un tipo de aplicación nuevo se registra inmediatamente cuando se decide trabajarlo;
+- las aplicaciones pueden tener cobertura `ready`, `partial` o `planned`;
+- imagen + descripción + contexto funcional forman la entrada habitual para analizar nuevas aplicaciones;
+- la inferencia separa lo observado, lo inferido y lo pendiente de definición;
+- Catálogo administrativo, Swagger y Compositor deben ser proyecciones sincronizadas de la misma fuente canónica.
+
+### Checkpoint 1 - Catalog Foundation 🚧
+
+- `features` como Master Feature Library canónica;
+- `applications` como Application Catalog canónico;
+- `templates` y `endpoints` derivados como proyecciones compatibles con manifest v0.3;
+- estado de implementación, exportabilidad, OpenAPI y tests por feature;
+- cobertura de aplicación calculada desde sus features;
+- asociación inversa feature → aplicaciones reutilizadoras;
+- test que prohíbe IDs de feature duplicados y referencias inexistentes;
+- administración visual en `/catalogo`;
+- OpenAPI vivo en `GET /api/v1/blueprint/openapi`;
+- Swagger UI en `/swagger` mostrando solo features implementadas y OpenAPI-ready;
+- documentación en `docs/product/master-feature-library.md`.
+
+### Siguientes checkpoints previstos
+
+- hacer que el compositor distinga claramente features implementadas, en desarrollo y pendientes;
+- impedir de forma gobernada exportar features no implementadas sin romper el acceptance histórico;
+- desacoplar las recetas de feature del exporter monolítico y convertirlas en unidades registrables;
+- incorporar cada nueva aplicación analizada al Application Catalog y reutilizar primero la biblioteca existente;
+- continuar ampliando la Master Feature Library con endpoints completos una vez estabilizada la composición.
 
 ## Destino de entrega
 
