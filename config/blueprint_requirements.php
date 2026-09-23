@@ -1,0 +1,176 @@
+<?php
+
+return [
+    'actors' => [
+        [
+            'id' => 'anonymous',
+            'name' => 'Consumidor público',
+            'authorization' => 'No requiere credenciales para operaciones públicas.',
+        ],
+        [
+            'id' => 'authenticated_user',
+            'name' => 'Usuario autenticado',
+            'authorization' => 'Requiere token Sanctum válido.',
+        ],
+        [
+            'id' => 'administrator',
+            'name' => 'Administrador',
+            'authorization' => 'Requiere token Sanctum válido y autorización admin-api.',
+        ],
+    ],
+    'requirements' => [
+        [
+            'id' => 'REQ-AUTH-001',
+            'type' => 'functional',
+            'actor_ids' => ['anonymous'],
+            'statement' => 'Una persona con credenciales válidas puede iniciar sesión y obtener un token de acceso Sanctum.',
+        ],
+        [
+            'id' => 'REQ-AUTH-002',
+            'type' => 'functional',
+            'actor_ids' => ['authenticated_user'],
+            'statement' => 'Un usuario autenticado puede cerrar sesión revocando el token de acceso actual.',
+        ],
+        [
+            'id' => 'REQ-USERS-001',
+            'type' => 'functional',
+            'actor_ids' => ['administrator'],
+            'statement' => 'Un administrador puede listar los usuarios disponibles en la API generada.',
+        ],
+        [
+            'id' => 'REQ-USERS-002',
+            'type' => 'functional',
+            'actor_ids' => ['administrator'],
+            'statement' => 'Un administrador puede consultar un usuario por su identificador.',
+        ],
+        [
+            'id' => 'REQ-USERS-003',
+            'type' => 'functional',
+            'actor_ids' => ['administrator'],
+            'statement' => 'Un administrador puede crear un usuario con nombre, email, password y rol opcional.',
+        ],
+        [
+            'id' => 'REQ-PRODUCTS-001',
+            'type' => 'functional',
+            'actor_ids' => ['anonymous'],
+            'statement' => 'Un consumidor público puede listar productos sin autenticación.',
+        ],
+        [
+            'id' => 'REQ-PRODUCTS-002',
+            'type' => 'functional',
+            'actor_ids' => ['anonymous'],
+            'statement' => 'Un consumidor público puede consultar un producto por su identificador sin autenticación.',
+        ],
+        [
+            'id' => 'NFR-API-001',
+            'type' => 'non_functional',
+            'actor_ids' => [],
+            'statement' => 'Las operaciones HTTP generadas se publican bajo la versión /api/v1.',
+        ],
+        [
+            'id' => 'NFR-SEC-001',
+            'type' => 'non_functional',
+            'actor_ids' => [],
+            'statement' => 'Las operaciones no públicas aplican autenticación y autorización según su perfil de exposición canónico.',
+        ],
+        [
+            'id' => 'NFR-ERR-001',
+            'type' => 'non_functional',
+            'actor_ids' => [],
+            'statement' => 'Los errores gobernados usan Problem Details RFC 9457 en español e incluyen correlación cuando está habilitada.',
+        ],
+        [
+            'id' => 'NFR-OBS-001',
+            'type' => 'non_functional',
+            'actor_ids' => [],
+            'statement' => 'Las respuestas propagan o generan X-Correlation-ID cuando la capacidad de correlación está habilitada.',
+        ],
+        [
+            'id' => 'NFR-IDEM-001',
+            'type' => 'non_functional',
+            'actor_ids' => [],
+            'statement' => 'Las operaciones POST, PUT y PATCH gobernadas requieren Idempotency-Key cuando idempotencia está habilitada, salvo auth.login y auth.logout.',
+        ],
+        [
+            'id' => 'NFR-AUD-001',
+            'type' => 'non_functional',
+            'actor_ids' => [],
+            'statement' => 'Cuando auditoría está habilitada, cada request gobernado registra ruta, método, path, estado, correlación y actor disponible.',
+        ],
+    ],
+    'business_rules' => [
+        [
+            'id' => 'BR-AUTH-001',
+            'statement' => 'Las credenciales inválidas no generan token y producen una respuesta 401 gobernada.',
+        ],
+        [
+            'id' => 'BR-USERS-001',
+            'statement' => 'El email de usuario debe ser único.',
+        ],
+        [
+            'id' => 'BR-USERS-002',
+            'statement' => 'El password nunca se persiste ni se devuelve en texto plano; se almacena hasheado.',
+        ],
+        [
+            'id' => 'BR-USERS-003',
+            'statement' => 'El rol por defecto es user y los roles admitidos actualmente son user y admin.',
+        ],
+        [
+            'id' => 'BR-USERS-004',
+            'statement' => 'Consultar un usuario inexistente produce 404 gobernado.',
+        ],
+        [
+            'id' => 'BR-PRODUCTS-001',
+            'statement' => 'Consultar un producto inexistente produce 404 gobernado.',
+        ],
+    ],
+    'acceptance_criteria' => [
+        ['id' => 'AC-AUTH-LOGIN-001', 'requirement_ids' => ['REQ-AUTH-001'], 'statement' => 'Credenciales válidas devuelven la sesión autenticada con token Bearer y datos del usuario.'],
+        ['id' => 'AC-AUTH-LOGIN-002', 'requirement_ids' => ['REQ-AUTH-001'], 'statement' => 'Credenciales inválidas devuelven 401 sin crear una sesión utilizable.'],
+        ['id' => 'AC-AUTH-LOGOUT-001', 'requirement_ids' => ['REQ-AUTH-002'], 'statement' => 'Un token autenticado válido puede ser revocado y la operación responde 204.'],
+        ['id' => 'AC-USERS-LIST-001', 'requirement_ids' => ['REQ-USERS-001'], 'statement' => 'Un administrador autenticado obtiene 200 con colección de usuarios y metadatos de paginación.'],
+        ['id' => 'AC-USERS-LIST-002', 'requirement_ids' => ['REQ-USERS-001'], 'statement' => 'Una identidad sin permiso admin-api no puede acceder al listado.'],
+        ['id' => 'AC-USERS-SHOW-001', 'requirement_ids' => ['REQ-USERS-002'], 'statement' => 'Un administrador obtiene 200 y UserData para un identificador existente.'],
+        ['id' => 'AC-USERS-SHOW-002', 'requirement_ids' => ['REQ-USERS-002'], 'statement' => 'Un identificador de usuario inexistente devuelve 404 gobernado.'],
+        ['id' => 'AC-USERS-CREATE-001', 'requirement_ids' => ['REQ-USERS-003'], 'statement' => 'Una solicitud válida de administrador devuelve 201 con UserData y nunca expone el password.'],
+        ['id' => 'AC-USERS-CREATE-002', 'requirement_ids' => ['REQ-USERS-003'], 'statement' => 'Datos inválidos o email duplicado devuelven 422 gobernado.'],
+        ['id' => 'AC-USERS-CREATE-003', 'requirement_ids' => ['REQ-USERS-003', 'NFR-IDEM-001'], 'statement' => 'Con idempotencia habilitada, users.create exige Idempotency-Key y permite replay seguro.'],
+        ['id' => 'AC-PRODUCTS-LIST-001', 'requirement_ids' => ['REQ-PRODUCTS-001'], 'statement' => 'El listado público devuelve 200 sin requerir autenticación y soporta la consulta gobernada de listas.'],
+        ['id' => 'AC-PRODUCTS-SHOW-001', 'requirement_ids' => ['REQ-PRODUCTS-002'], 'statement' => 'Un producto existente puede consultarse públicamente y devuelve 200.'],
+        ['id' => 'AC-PRODUCTS-SHOW-002', 'requirement_ids' => ['REQ-PRODUCTS-002'], 'statement' => 'Un producto inexistente devuelve 404 gobernado.'],
+        ['id' => 'AC-NFR-API-001', 'requirement_ids' => ['NFR-API-001'], 'statement' => 'El catálogo canónico y OpenAPI publican paths bajo /api/v1.'],
+        ['id' => 'AC-NFR-SEC-001', 'requirement_ids' => ['NFR-SEC-001'], 'statement' => 'OpenAPI y las rutas generadas aplican bearer auth y gates donde la exposición lo requiere.'],
+        ['id' => 'AC-NFR-ERR-001', 'requirement_ids' => ['NFR-ERR-001'], 'statement' => 'Los errores gobernados usan application/problem+json con type, title, status, detail, instance y correlation_id.'],
+        ['id' => 'AC-NFR-OBS-001', 'requirement_ids' => ['NFR-OBS-001'], 'statement' => 'Un X-Correlation-ID recibido se conserva en la respuesta y uno ausente puede ser generado.'],
+        ['id' => 'AC-NFR-AUD-001', 'requirement_ids' => ['NFR-AUD-001'], 'statement' => 'El middleware de auditoría captura metadatos del request y resultado cuando la capability está habilitada.'],
+    ],
+    'use_cases' => [
+        ['id' => 'UC-AUTH-LOGIN', 'name' => 'Iniciar sesión', 'actor_ids' => ['anonymous'], 'requirement_ids' => ['REQ-AUTH-001'], 'business_rule_ids' => ['BR-AUTH-001'], 'acceptance_criteria_ids' => ['AC-AUTH-LOGIN-001', 'AC-AUTH-LOGIN-002']],
+        ['id' => 'UC-AUTH-LOGOUT', 'name' => 'Cerrar sesión', 'actor_ids' => ['authenticated_user'], 'requirement_ids' => ['REQ-AUTH-002'], 'business_rule_ids' => [], 'acceptance_criteria_ids' => ['AC-AUTH-LOGOUT-001']],
+        ['id' => 'UC-USERS-LIST', 'name' => 'Listar usuarios', 'actor_ids' => ['administrator'], 'requirement_ids' => ['REQ-USERS-001'], 'business_rule_ids' => [], 'acceptance_criteria_ids' => ['AC-USERS-LIST-001', 'AC-USERS-LIST-002']],
+        ['id' => 'UC-USERS-SHOW', 'name' => 'Consultar usuario', 'actor_ids' => ['administrator'], 'requirement_ids' => ['REQ-USERS-002'], 'business_rule_ids' => ['BR-USERS-004'], 'acceptance_criteria_ids' => ['AC-USERS-SHOW-001', 'AC-USERS-SHOW-002']],
+        ['id' => 'UC-USERS-CREATE', 'name' => 'Crear usuario', 'actor_ids' => ['administrator'], 'requirement_ids' => ['REQ-USERS-003'], 'business_rule_ids' => ['BR-USERS-001', 'BR-USERS-002', 'BR-USERS-003'], 'acceptance_criteria_ids' => ['AC-USERS-CREATE-001', 'AC-USERS-CREATE-002', 'AC-USERS-CREATE-003']],
+        ['id' => 'UC-PRODUCTS-LIST', 'name' => 'Listar productos', 'actor_ids' => ['anonymous'], 'requirement_ids' => ['REQ-PRODUCTS-001'], 'business_rule_ids' => [], 'acceptance_criteria_ids' => ['AC-PRODUCTS-LIST-001']],
+        ['id' => 'UC-PRODUCTS-SHOW', 'name' => 'Consultar producto', 'actor_ids' => ['anonymous'], 'requirement_ids' => ['REQ-PRODUCTS-002'], 'business_rule_ids' => ['BR-PRODUCTS-001'], 'acceptance_criteria_ids' => ['AC-PRODUCTS-SHOW-001', 'AC-PRODUCTS-SHOW-002']],
+    ],
+    'permission_policies' => [
+        ['id' => 'public', 'exposure' => 'public', 'authentication' => false, 'ability' => null],
+        ['id' => 'authenticated', 'exposure' => 'authenticated', 'authentication' => true, 'ability' => null],
+        ['id' => 'admin-api', 'exposure' => 'admin', 'authentication' => true, 'ability' => 'admin-api'],
+        ['id' => 'internal-api', 'exposure' => 'internal', 'authentication' => true, 'ability' => 'internal-api'],
+    ],
+    'idempotency_policies' => [
+        ['id' => 'not_applicable', 'description' => 'La operación no usa middleware de idempotencia por su método o semántica actual.'],
+        ['id' => 'excluded', 'description' => 'La operación está excluida explícitamente del middleware de idempotencia.'],
+        ['id' => 'required_when_enabled', 'description' => 'La operación exige Idempotency-Key cuando la capability de idempotencia está habilitada.'],
+    ],
+    'audit_events' => [
+        ['id' => 'audit.auth.login', 'description' => 'Request de inicio de sesión procesado.', 'semantic_status' => 'specified'],
+        ['id' => 'audit.auth.logout', 'description' => 'Request de cierre de sesión procesado.', 'semantic_status' => 'specified'],
+        ['id' => 'audit.users.list', 'description' => 'Lectura del listado de usuarios procesada.', 'semantic_status' => 'specified'],
+        ['id' => 'audit.users.show', 'description' => 'Lectura de un usuario procesada.', 'semantic_status' => 'specified'],
+        ['id' => 'audit.users.create', 'description' => 'Creación de usuario procesada.', 'semantic_status' => 'specified'],
+        ['id' => 'audit.products.list', 'description' => 'Lectura del listado público de productos procesada.', 'semantic_status' => 'specified'],
+        ['id' => 'audit.products.show', 'description' => 'Lectura pública de un producto procesada.', 'semantic_status' => 'specified'],
+    ],
+];

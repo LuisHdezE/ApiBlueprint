@@ -1,11 +1,113 @@
 <?php
 
+$requirementsCatalog = require __DIR__.'/blueprint_requirements.php';
+
 $features = [
-    ['id' => 'auth.login', 'capability' => 'authentication', 'capability_label' => 'Autenticación', 'summary' => 'Iniciar sesión', 'method' => 'POST', 'path' => '/api/v1/auth/login', 'default_exposure' => 'public', 'implementation_status' => 'implemented', 'exportable' => true, 'openapi_ready' => true, 'tests_ready' => true],
-    ['id' => 'auth.logout', 'capability' => 'authentication', 'capability_label' => 'Autenticación', 'summary' => 'Cerrar sesión', 'method' => 'POST', 'path' => '/api/v1/auth/logout', 'default_exposure' => 'authenticated', 'implementation_status' => 'implemented', 'exportable' => true, 'openapi_ready' => true, 'tests_ready' => true],
-    ['id' => 'users.list', 'capability' => 'users', 'capability_label' => 'Usuarios', 'summary' => 'Listar usuarios', 'method' => 'GET', 'path' => '/api/v1/users', 'default_exposure' => 'admin', 'implementation_status' => 'implemented', 'exportable' => true, 'openapi_ready' => true, 'tests_ready' => true],
-    ['id' => 'users.show', 'capability' => 'users', 'capability_label' => 'Usuarios', 'summary' => 'Obtener usuario', 'method' => 'GET', 'path' => '/api/v1/users/{id}', 'default_exposure' => 'admin', 'implementation_status' => 'implemented', 'exportable' => true, 'openapi_ready' => true, 'tests_ready' => true],
-    ['id' => 'users.create', 'capability' => 'users', 'capability_label' => 'Usuarios', 'summary' => 'Crear usuario', 'method' => 'POST', 'path' => '/api/v1/users', 'default_exposure' => 'admin', 'implementation_status' => 'implemented', 'exportable' => true, 'openapi_ready' => true, 'tests_ready' => true],
+    [
+        'id' => 'auth.login',
+        'capability' => 'authentication',
+        'capability_label' => 'Autenticación',
+        'summary' => 'Iniciar sesión',
+        'method' => 'POST',
+        'path' => '/api/v1/auth/login',
+        'default_exposure' => 'public',
+        'implementation_status' => 'implemented',
+        'exportable' => true,
+        'openapi_ready' => true,
+        'tests_ready' => true,
+        'requirement_ids' => ['REQ-AUTH-001', 'NFR-API-001', 'NFR-ERR-001', 'NFR-OBS-001', 'NFR-AUD-001'],
+        'use_case_ids' => ['UC-AUTH-LOGIN'],
+        'acceptance_criteria_ids' => ['AC-AUTH-LOGIN-001', 'AC-AUTH-LOGIN-002', 'AC-NFR-API-001', 'AC-NFR-ERR-001', 'AC-NFR-OBS-001', 'AC-NFR-AUD-001'],
+        'business_rule_ids' => ['BR-AUTH-001'],
+        'permission_policy' => 'public',
+        'idempotency_policy' => 'excluded',
+        'audit_events' => ['audit.auth.login'],
+        'test_evidence' => ['tests/Feature/GeneratedAuthLoginVerticalSliceExportTest.php'],
+    ],
+    [
+        'id' => 'auth.logout',
+        'capability' => 'authentication',
+        'capability_label' => 'Autenticación',
+        'summary' => 'Cerrar sesión',
+        'method' => 'POST',
+        'path' => '/api/v1/auth/logout',
+        'default_exposure' => 'authenticated',
+        'implementation_status' => 'implemented',
+        'exportable' => true,
+        'openapi_ready' => true,
+        'tests_ready' => true,
+        'requirement_ids' => ['REQ-AUTH-002', 'NFR-API-001', 'NFR-SEC-001', 'NFR-ERR-001', 'NFR-OBS-001', 'NFR-AUD-001'],
+        'use_case_ids' => ['UC-AUTH-LOGOUT'],
+        'acceptance_criteria_ids' => ['AC-AUTH-LOGOUT-001', 'AC-NFR-API-001', 'AC-NFR-SEC-001', 'AC-NFR-ERR-001', 'AC-NFR-OBS-001', 'AC-NFR-AUD-001'],
+        'business_rule_ids' => [],
+        'permission_policy' => 'authenticated',
+        'idempotency_policy' => 'excluded',
+        'audit_events' => ['audit.auth.logout'],
+        'test_evidence' => ['tests/Feature/GeneratedAuthLogoutVerticalSliceExportTest.php'],
+    ],
+    [
+        'id' => 'users.list',
+        'capability' => 'users',
+        'capability_label' => 'Usuarios',
+        'summary' => 'Listar usuarios',
+        'method' => 'GET',
+        'path' => '/api/v1/users',
+        'default_exposure' => 'admin',
+        'implementation_status' => 'implemented',
+        'exportable' => true,
+        'openapi_ready' => true,
+        'tests_ready' => true,
+        'requirement_ids' => ['REQ-USERS-001', 'NFR-API-001', 'NFR-SEC-001', 'NFR-ERR-001', 'NFR-OBS-001', 'NFR-AUD-001'],
+        'use_case_ids' => ['UC-USERS-LIST'],
+        'acceptance_criteria_ids' => ['AC-USERS-LIST-001', 'AC-USERS-LIST-002', 'AC-NFR-API-001', 'AC-NFR-SEC-001', 'AC-NFR-ERR-001', 'AC-NFR-OBS-001', 'AC-NFR-AUD-001'],
+        'business_rule_ids' => [],
+        'permission_policy' => 'admin-api',
+        'idempotency_policy' => 'not_applicable',
+        'audit_events' => ['audit.users.list'],
+        'test_evidence' => ['tests/Feature/GeneratedUsersListVerticalSliceExportTest.php'],
+    ],
+    [
+        'id' => 'users.show',
+        'capability' => 'users',
+        'capability_label' => 'Usuarios',
+        'summary' => 'Obtener usuario',
+        'method' => 'GET',
+        'path' => '/api/v1/users/{id}',
+        'default_exposure' => 'admin',
+        'implementation_status' => 'implemented',
+        'exportable' => true,
+        'openapi_ready' => true,
+        'tests_ready' => true,
+        'requirement_ids' => ['REQ-USERS-002', 'NFR-API-001', 'NFR-SEC-001', 'NFR-ERR-001', 'NFR-OBS-001', 'NFR-AUD-001'],
+        'use_case_ids' => ['UC-USERS-SHOW'],
+        'acceptance_criteria_ids' => ['AC-USERS-SHOW-001', 'AC-USERS-SHOW-002', 'AC-NFR-API-001', 'AC-NFR-SEC-001', 'AC-NFR-ERR-001', 'AC-NFR-OBS-001', 'AC-NFR-AUD-001'],
+        'business_rule_ids' => ['BR-USERS-004'],
+        'permission_policy' => 'admin-api',
+        'idempotency_policy' => 'not_applicable',
+        'audit_events' => ['audit.users.show'],
+        'test_evidence' => ['tests/Feature/GeneratedUsersShowVerticalSliceExportTest.php'],
+    ],
+    [
+        'id' => 'users.create',
+        'capability' => 'users',
+        'capability_label' => 'Usuarios',
+        'summary' => 'Crear usuario',
+        'method' => 'POST',
+        'path' => '/api/v1/users',
+        'default_exposure' => 'admin',
+        'implementation_status' => 'implemented',
+        'exportable' => true,
+        'openapi_ready' => true,
+        'tests_ready' => true,
+        'requirement_ids' => ['REQ-USERS-003', 'NFR-API-001', 'NFR-SEC-001', 'NFR-ERR-001', 'NFR-OBS-001', 'NFR-IDEM-001', 'NFR-AUD-001'],
+        'use_case_ids' => ['UC-USERS-CREATE'],
+        'acceptance_criteria_ids' => ['AC-USERS-CREATE-001', 'AC-USERS-CREATE-002', 'AC-USERS-CREATE-003', 'AC-NFR-API-001', 'AC-NFR-SEC-001', 'AC-NFR-ERR-001', 'AC-NFR-OBS-001', 'AC-NFR-AUD-001'],
+        'business_rule_ids' => ['BR-USERS-001', 'BR-USERS-002', 'BR-USERS-003'],
+        'permission_policy' => 'admin-api',
+        'idempotency_policy' => 'required_when_enabled',
+        'audit_events' => ['audit.users.create'],
+        'test_evidence' => ['tests/Feature/GeneratedUsersCreateVerticalSliceExportTest.php'],
+    ],
     ['id' => 'users.update', 'capability' => 'users', 'capability_label' => 'Usuarios', 'summary' => 'Actualizar usuario', 'method' => 'PUT', 'path' => '/api/v1/users/{id}', 'default_exposure' => 'admin'],
     ['id' => 'users.delete', 'capability' => 'users', 'capability_label' => 'Usuarios', 'summary' => 'Eliminar usuario', 'method' => 'DELETE', 'path' => '/api/v1/users/{id}', 'default_exposure' => 'admin'],
     ['id' => 'roles.list', 'capability' => 'roles', 'capability_label' => 'Roles y permisos', 'summary' => 'Listar roles', 'method' => 'GET', 'path' => '/api/v1/roles', 'default_exposure' => 'admin'],
@@ -15,8 +117,48 @@ $features = [
     ['id' => 'customers.create', 'capability' => 'customers', 'capability_label' => 'Clientes', 'summary' => 'Crear cliente', 'method' => 'POST', 'path' => '/api/v1/customers', 'default_exposure' => 'authenticated'],
     ['id' => 'customers.update', 'capability' => 'customers', 'capability_label' => 'Clientes', 'summary' => 'Actualizar cliente', 'method' => 'PUT', 'path' => '/api/v1/customers/{id}', 'default_exposure' => 'authenticated'],
     ['id' => 'customers.delete', 'capability' => 'customers', 'capability_label' => 'Clientes', 'summary' => 'Eliminar cliente', 'method' => 'DELETE', 'path' => '/api/v1/customers/{id}', 'default_exposure' => 'admin'],
-    ['id' => 'products.list', 'capability' => 'products', 'capability_label' => 'Productos', 'summary' => 'Listar productos', 'method' => 'GET', 'path' => '/api/v1/products', 'default_exposure' => 'public', 'implementation_status' => 'implemented', 'exportable' => true, 'openapi_ready' => true, 'tests_ready' => true],
-    ['id' => 'products.show', 'capability' => 'products', 'capability_label' => 'Productos', 'summary' => 'Obtener producto', 'method' => 'GET', 'path' => '/api/v1/products/{id}', 'default_exposure' => 'public', 'implementation_status' => 'implemented', 'exportable' => true, 'openapi_ready' => true, 'tests_ready' => true],
+    [
+        'id' => 'products.list',
+        'capability' => 'products',
+        'capability_label' => 'Productos',
+        'summary' => 'Listar productos',
+        'method' => 'GET',
+        'path' => '/api/v1/products',
+        'default_exposure' => 'public',
+        'implementation_status' => 'implemented',
+        'exportable' => true,
+        'openapi_ready' => true,
+        'tests_ready' => true,
+        'requirement_ids' => ['REQ-PRODUCTS-001', 'NFR-API-001', 'NFR-ERR-001', 'NFR-OBS-001', 'NFR-AUD-001'],
+        'use_case_ids' => ['UC-PRODUCTS-LIST'],
+        'acceptance_criteria_ids' => ['AC-PRODUCTS-LIST-001', 'AC-NFR-API-001', 'AC-NFR-ERR-001', 'AC-NFR-OBS-001', 'AC-NFR-AUD-001'],
+        'business_rule_ids' => [],
+        'permission_policy' => 'public',
+        'idempotency_policy' => 'not_applicable',
+        'audit_events' => ['audit.products.list'],
+        'test_evidence' => ['tests/Feature/GeneratedProductListVerticalSliceExportTest.php'],
+    ],
+    [
+        'id' => 'products.show',
+        'capability' => 'products',
+        'capability_label' => 'Productos',
+        'summary' => 'Obtener producto',
+        'method' => 'GET',
+        'path' => '/api/v1/products/{id}',
+        'default_exposure' => 'public',
+        'implementation_status' => 'implemented',
+        'exportable' => true,
+        'openapi_ready' => true,
+        'tests_ready' => true,
+        'requirement_ids' => ['REQ-PRODUCTS-002', 'NFR-API-001', 'NFR-ERR-001', 'NFR-OBS-001', 'NFR-AUD-001'],
+        'use_case_ids' => ['UC-PRODUCTS-SHOW'],
+        'acceptance_criteria_ids' => ['AC-PRODUCTS-SHOW-001', 'AC-PRODUCTS-SHOW-002', 'AC-NFR-API-001', 'AC-NFR-ERR-001', 'AC-NFR-OBS-001', 'AC-NFR-AUD-001'],
+        'business_rule_ids' => ['BR-PRODUCTS-001'],
+        'permission_policy' => 'public',
+        'idempotency_policy' => 'not_applicable',
+        'audit_events' => ['audit.products.show'],
+        'test_evidence' => ['tests/Feature/GeneratedProductVerticalSliceExportTest.php'],
+    ],
     ['id' => 'products.create', 'capability' => 'products', 'capability_label' => 'Productos', 'summary' => 'Crear producto', 'method' => 'POST', 'path' => '/api/v1/products', 'default_exposure' => 'admin'],
     ['id' => 'orders.list', 'capability' => 'orders', 'capability_label' => 'Pedidos', 'summary' => 'Listar pedidos', 'method' => 'GET', 'path' => '/api/v1/orders', 'default_exposure' => 'authenticated'],
     ['id' => 'orders.show', 'capability' => 'orders', 'capability_label' => 'Pedidos', 'summary' => 'Obtener pedido', 'method' => 'GET', 'path' => '/api/v1/orders/{id}', 'default_exposure' => 'authenticated'],
@@ -31,6 +173,24 @@ foreach ($features as &$feature) {
     $feature['exportable'] ??= false;
     $feature['openapi_ready'] ??= false;
     $feature['tests_ready'] ??= false;
+    $feature['requirement_ids'] ??= [];
+    $feature['use_case_ids'] ??= [];
+    $feature['acceptance_criteria_ids'] ??= [];
+    $feature['business_rule_ids'] ??= [];
+    $feature['permission_policy'] ??= null;
+    $feature['idempotency_policy'] ??= 'pending';
+    $feature['audit_events'] ??= [];
+    $feature['test_evidence'] ??= [];
+    $feature['traceability_status'] = $feature['implementation_status'] === 'implemented'
+        && $feature['requirement_ids'] !== []
+        && $feature['use_case_ids'] !== []
+        && $feature['acceptance_criteria_ids'] !== []
+        && $feature['permission_policy'] !== null
+        && $feature['idempotency_policy'] !== 'pending'
+        && $feature['audit_events'] !== []
+        && $feature['test_evidence'] !== []
+            ? 'complete'
+            : 'pending';
 }
 unset($feature);
 
@@ -124,12 +284,40 @@ $endpoints = array_map(static fn (array $feature): array => [
     'exportable' => $feature['exportable'],
     'openapi_ready' => $feature['openapi_ready'],
     'tests_ready' => $feature['tests_ready'],
+    'traceability_status' => $feature['traceability_status'],
+    'requirement_ids' => $feature['requirement_ids'],
+    'use_case_ids' => $feature['use_case_ids'],
+    'acceptance_criteria_ids' => $feature['acceptance_criteria_ids'],
+    'business_rule_ids' => $feature['business_rule_ids'],
+    'permission_policy' => $feature['permission_policy'],
+    'idempotency_policy' => $feature['idempotency_policy'],
+    'audit_events' => $feature['audit_events'],
+    'test_evidence' => $feature['test_evidence'],
     'applications' => $feature['applications'],
 ], $features);
 
+$traceability = array_values(array_map(
+    static fn (array $feature): array => [
+        'feature_id' => $feature['id'],
+        'operation_id' => str_replace('.', '_', $feature['id']),
+        'requirement_ids' => $feature['requirement_ids'],
+        'use_case_ids' => $feature['use_case_ids'],
+        'acceptance_criteria_ids' => $feature['acceptance_criteria_ids'],
+        'business_rule_ids' => $feature['business_rule_ids'],
+        'permission_policy' => $feature['permission_policy'],
+        'idempotency_policy' => $feature['idempotency_policy'],
+        'audit_events' => $feature['audit_events'],
+        'test_evidence' => $feature['test_evidence'],
+    ],
+    array_filter(
+        $features,
+        static fn (array $feature): bool => $feature['implementation_status'] === 'implemented',
+    ),
+));
+
 return [
     'schema_version' => '0.3',
-    'catalog_version' => '0.1',
+    'catalog_version' => '0.2',
     'api_version' => 'v1',
     'feature_statuses' => [
         ['id' => 'implemented', 'label' => 'Implementado'],
@@ -175,6 +363,15 @@ return [
             'audit' => true,
         ],
     ],
+    'actors' => $requirementsCatalog['actors'],
+    'requirements' => $requirementsCatalog['requirements'],
+    'business_rules' => $requirementsCatalog['business_rules'],
+    'acceptance_criteria' => $requirementsCatalog['acceptance_criteria'],
+    'use_cases' => $requirementsCatalog['use_cases'],
+    'permission_policies' => $requirementsCatalog['permission_policies'],
+    'idempotency_policies' => $requirementsCatalog['idempotency_policies'],
+    'audit_events' => $requirementsCatalog['audit_events'],
+    'traceability' => $traceability,
     'applications' => $applications,
     'features' => $features,
     'templates' => $templates,

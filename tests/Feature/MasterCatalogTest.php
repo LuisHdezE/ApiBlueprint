@@ -10,7 +10,7 @@ final class MasterCatalogTest extends TestCase
     {
         $response = $this->getJson('/api/v1/blueprint/catalog')
             ->assertOk()
-            ->assertJsonPath('catalog_version', '0.1')
+            ->assertJsonPath('catalog_version', '0.2')
             ->assertJsonCount(4, 'applications')
             ->assertJsonCount(4, 'templates');
 
