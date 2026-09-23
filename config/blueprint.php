@@ -2,7 +2,7 @@
 
 $features = [
     ['id' => 'auth.login', 'capability' => 'authentication', 'capability_label' => 'Autenticación', 'summary' => 'Iniciar sesión', 'method' => 'POST', 'path' => '/api/v1/auth/login', 'default_exposure' => 'public', 'implementation_status' => 'implemented', 'exportable' => true, 'openapi_ready' => true, 'tests_ready' => true],
-    ['id' => 'auth.logout', 'capability' => 'authentication', 'capability_label' => 'Autenticación', 'summary' => 'Cerrar sesión', 'method' => 'POST', 'path' => '/api/v1/auth/logout', 'default_exposure' => 'authenticated'],
+    ['id' => 'auth.logout', 'capability' => 'authentication', 'capability_label' => 'Autenticación', 'summary' => 'Cerrar sesión', 'method' => 'POST', 'path' => '/api/v1/auth/logout', 'default_exposure' => 'authenticated', 'implementation_status' => 'implemented', 'exportable' => true, 'openapi_ready' => true, 'tests_ready' => true],
     ['id' => 'users.list', 'capability' => 'users', 'capability_label' => 'Usuarios', 'summary' => 'Listar usuarios', 'method' => 'GET', 'path' => '/api/v1/users', 'default_exposure' => 'admin'],
     ['id' => 'users.show', 'capability' => 'users', 'capability_label' => 'Usuarios', 'summary' => 'Obtener usuario', 'method' => 'GET', 'path' => '/api/v1/users/{id}', 'default_exposure' => 'admin'],
     ['id' => 'users.create', 'capability' => 'users', 'capability_label' => 'Usuarios', 'summary' => 'Crear usuario', 'method' => 'POST', 'path' => '/api/v1/users', 'default_exposure' => 'admin'],

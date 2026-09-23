@@ -25,6 +25,14 @@ final class MasterCatalogTest extends TestCase
         $this->assertTrue($features['auth.login']['exportable']);
         $this->assertTrue($features['auth.login']['openapi_ready']);
         $this->assertTrue($features['auth.login']['tests_ready']);
+        $this->assertSame('implemented', $features['auth.logout']['implementation_status']);
+        $this->assertTrue($features['auth.logout']['exportable']);
+        $this->assertTrue($features['auth.logout']['openapi_ready']);
+        $this->assertTrue($features['auth.logout']['tests_ready']);
+
+        $saas = collect($response->json('applications'))->firstWhere('id', 'saas');
+        $this->assertSame('partial', $saas['status']);
+        $this->assertSame(['implemented' => 2, 'total' => 8], $saas['coverage']);
 
         $commerce = collect($response->json('applications'))->firstWhere('id', 'commerce');
         $this->assertSame('partial', $commerce['status']);
@@ -74,7 +82,10 @@ final class MasterCatalogTest extends TestCase
         $this->assertSame('products.show', $paths['/api/v1/products/{id}']['get']['x-apiblueprint-feature-id']);
         $this->assertSame('auth.login', $paths['/api/v1/auth/login']['post']['x-apiblueprint-feature-id']);
         $this->assertSame('#/components/schemas/AuthLoginRequest', $paths['/api/v1/auth/login']['post']['requestBody']['content']['application/json']['schema']['$ref']);
-        $this->assertCount(3, $paths);
+        $this->assertSame('auth.logout', $paths['/api/v1/auth/logout']['post']['x-apiblueprint-feature-id']);
+        $this->assertSame([['bearerAuth' => []]], $paths['/api/v1/auth/logout']['post']['security']);
+        $this->assertArrayHasKey('204', $paths['/api/v1/auth/logout']['post']['responses']);
+        $this->assertCount(4, $paths);
     }
 
     public function test_catalog_administration_and_swagger_views_are_available(): void

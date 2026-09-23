@@ -143,7 +143,7 @@ Integrado por PR #8 con CI pre-merge y post-merge verdes.
 
 Objetivo: comenzar a ampliar la biblioteca sobre la fundación U0.7 con una capacidad transversal de alta reutilización y una sola implementación canónica compartida por todas las aplicaciones.
 
-### Checkpoint 1 - `auth.login` 🚧
+### Checkpoint 1 - `auth.login` ✅
 
 - una única feature `auth.login` reutilizada por SaaS, Commerce y aplicaciones futuras;
 - `AuthenticationGateway` como puerto de Application;
@@ -162,9 +162,19 @@ Objetivo: comenzar a ampliar la biblioteca sobre la fundación U0.7 con una capa
 - test raíz que verifica el contenido del ZIP sin infraestructura de Products;
 - acceptance SaaS y Commerce ejecutando exactamente la misma receta de login.
 
-### Siguientes checkpoints previstos
+### Checkpoint 2 - `auth.logout` 🚧
 
-- `auth.logout` reutilizando la misma identidad y tokens;
+- una única feature `auth.logout` reutilizable por cualquier aplicación;
+- dependencia explícita de `auth.login`, sin identidad ni migraciones duplicadas;
+- revocación exclusiva del token Sanctum actual;
+- `TokenRevocationGateway` y `LogoutUser` independientes de Laravel;
+- `SanctumTokenRevocationGateway` como adaptador;
+- endpoint protegido con 204 y 401 documentados;
+- login/logout excluidos de idempotency key;
+- Swagger, catálogo y tests actualizados en el mismo checkpoint;
+- acceptance ejecutando login → logout → token revocado.
+
+### Siguientes checkpoints previstos
 - hacer que el compositor distinga claramente features implementadas, en desarrollo y pendientes;
 - impedir de forma gobernada exportar features no implementadas sin romper el acceptance histórico;
 - desacoplar las recetas de feature del exporter monolítico y convertirlas en unidades registrables;
