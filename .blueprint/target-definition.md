@@ -65,6 +65,7 @@ After the API gate is reconciled, inventory the existing web composer/catalog/sw
 
 - `templates/status.example.yaml` still advertises Blueprint 0.5.3 while the stable root version and project template are 0.5.4.
 - `pilot_id` in the generic compliance-review schema is legacy terminology and should be generalized in a future compatible revision.
+- `scripts/validate-reference-pilot-compliance.py` is coupled to the CareShift reference pilot, protected finding IDs and exact historical SHAs; Blueprint lacks a generic reusable consumer-compliance validator for arbitrary adopting repositories.
 - Universal Postman applicability should be reviewed against projects that already provide reproducible executable contract acceptance; until the canonical Blueprint changes, the current Postman requirement remains authoritative.
 
 ## Exit condition
