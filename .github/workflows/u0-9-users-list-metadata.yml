@@ -1,0 +1,42 @@
+name: U0.9 Users List Metadata
+
+on:
+  push:
+    branches:
+      - feature/u0-9-users-list
+    paths:
+      - scripts/u0-9-users-list-metadata.py
+      - .github/workflows/u0-9-users-list-metadata.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/u0-9-users-list
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - name: Apply catalog, Swagger, tests and docs
+        run: python3 scripts/u0-9-users-list-metadata.py
+      - name: Validate PHP syntax
+        run: |
+          php -l config/blueprint.php
+          php -l app/Application/Blueprint/Queries/GetMasterOpenApi.php
+          php -l tests/Feature/MasterCatalogTest.php
+          php -l tests/Feature/GeneratedUsersListVerticalSliceExportTest.php
+      - name: Commit metadata changes
+        run: |
+          if git diff --quiet; then
+            echo "No metadata changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/blueprint.php app/Application/Blueprint/Queries/GetMasterOpenApi.php tests/Feature/MasterCatalogTest.php tests/Feature/GeneratedUsersListVerticalSliceExportTest.php docs/delivery/roadmap.md docs/product/master-feature-library.md
+          git commit -m "docs: register canonical users list feature"
+          git push origin HEAD:feature/u0-9-users-list
