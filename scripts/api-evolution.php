@@ -177,6 +177,7 @@ function collectReferencedSchemas(mixed $value, array $schemas, array &$collecte
     foreach ($value as $child) {
         if (is_array($child)) {
             collectReferencedSchemas($child, $schemas, $collected);
+
             continue;
         }
 
@@ -288,6 +289,7 @@ function resolveImpactPath(array $baseline, array $current): ?string
     if (is_string($override) && $override !== '') {
         if (! is_file($override)) {
             fwrite(STDERR, "API impact report not found: {$override}\n");
+
             return null;
         }
 
