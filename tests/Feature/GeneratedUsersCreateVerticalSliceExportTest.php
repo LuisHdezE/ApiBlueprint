@@ -26,6 +26,7 @@ final class GeneratedUsersCreateVerticalSliceExportTest extends TestCase
         $repository = $zip->getFromName('users-create-api/app/Infrastructure/Users/DatabaseUserCreateRepository.php');
         $validator = $zip->getFromName('users-create-api/app/Presentation/Http/Support/CreateUserRequestValidator.php');
         $provider = $zip->getFromName('users-create-api/app/Providers/AppServiceProvider.php');
+        $bootstrap = $zip->getFromName('users-create-api/bootstrap/app.php');
         $routes = $zip->getFromName('users-create-api/routes/api.php');
         $openApi = $zip->getFromName('users-create-api/openapi/openapi.yaml');
         $verticalSliceTest = $zip->getFromName('users-create-api/tests/Feature/UsersCreateVerticalSliceTest.php');
@@ -46,6 +47,12 @@ final class GeneratedUsersCreateVerticalSliceExportTest extends TestCase
         $this->assertStringContainsString("Rule::unique('users', 'email')", $validator);
         $this->assertIsString($provider);
         $this->assertStringContainsString('UserCreateRepository::class, DatabaseUserCreateRepository::class', $provider);
+
+        $this->assertIsString($bootstrap);
+        $this->assertSame(1, substr_count($bootstrap, '$middleware->alias(['));
+        $this->assertStringContainsString("'idempotency' => IdempotencyMiddleware::class", $bootstrap);
+        $this->assertStringContainsString("'audit.request' => AuditRequestMiddleware::class", $bootstrap);
+
         $this->assertIsString($routes);
         $this->assertStringContainsString("'auth:sanctum'", $routes);
         $this->assertStringContainsString("'can:admin-api'", $routes);
