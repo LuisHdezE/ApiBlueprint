@@ -41,6 +41,7 @@ for acceptance_case in "${cases[@]}"; do
   test -f "$generated_root/.apiblueprint.json"
   test -f "$generated_root/openapi/openapi.yaml"
   test -f "$generated_root/artisan"
+  test -f "$generated_root/tests/Unit/ArchitectureBoundaryTest.php"
 
   python3 "$ROOT_DIR/scripts/validate-generated-openapi.py" "$generated_root"
 
@@ -54,6 +55,7 @@ for acceptance_case in "${cases[@]}"; do
     php artisan key:generate --ansi
 
     vendor/bin/pint --test
+    php artisan test tests/Unit/ArchitectureBoundaryTest.php
     php artisan test
 
     if [[ "$template" == "blank" ]]; then

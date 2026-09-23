@@ -1,0 +1,41 @@
+{
+  "schema_version": "0.5.4",
+  "evidence": [
+    {
+      "id": "EVD-BPADOPT003-EXPORT-DECORATOR",
+      "type": "file",
+      "value": "app/Infrastructure/Blueprint/ArchitectureConformanceBlueprintExporter.php",
+      "description": "Decorador de Infrastructure que añade el test de límites arquitectónicos al ZIP generado sin refactorizar el exporter base.",
+      "scope": {"level": "phase", "id": "architecture_security_data"},
+      "created_at": "2026-09-23T17:55:00-03:00",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-BPADOPT003-EXPORT-QA",
+      "type": "test_report",
+      "value": "tests/Feature/GeneratedArchitectureBoundaryExportTest.php",
+      "description": "Verifica que cada export incorpore el test PHPUnit de Clean Architecture y sus reglas gobernadas.",
+      "scope": {"level": "phase", "id": "architecture_security_data"},
+      "created_at": "2026-09-23T17:55:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT003-GENERATED-ACCEPTANCE",
+      "type": "test_report",
+      "value": "scripts/accept-generated-solutions.sh",
+      "description": "Acceptance ejecuta el ArchitectureBoundaryTest dentro de Blank, CRUD, SaaS y Commerce exportados antes de la suite completa.",
+      "scope": {"level": "phase", "id": "architecture_security_data"},
+      "created_at": "2026-09-23T17:55:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT003-DOCUMENTATION",
+      "type": "file",
+      "value": "docs/delivery/generated-architecture-conformance.md",
+      "description": "Contrato de dependencias, composition root, QA y frontera explícita de BP-ADOPT-003.",
+      "scope": {"level": "phase", "id": "architecture_security_data"},
+      "created_at": "2026-09-23T17:55:00-03:00",
+      "producer": "mixed"
+    }
+  ]
+}
