@@ -1,0 +1,68 @@
+{
+  "schema_version": "0.5.4",
+  "evidence": [
+    {
+      "id": "EVD-BPADOPT004-POSTMAN-COLLECTION",
+      "type": "file",
+      "value": "postman/ApiBlueprint.generated.postman_collection.json",
+      "description": "Colección Postman canónica con requests positivos, negativos, autorización, validación e idempotencia para las operationId implementadas.",
+      "scope": {"level": "phase", "id": "postman_contract"},
+      "created_at": "2026-09-23T18:44:00-03:00",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-BPADOPT004-POSTMAN-ENVIRONMENT",
+      "type": "file",
+      "value": "postman/ApiBlueprint.local.postman_environment.json",
+      "description": "Environment local versionado con datos sintéticos y variables runtime de token inicialmente vacías.",
+      "scope": {"level": "phase", "id": "postman_contract"},
+      "created_at": "2026-09-23T18:44:00-03:00",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-BPADOPT004-POSTMAN-COVERAGE",
+      "type": "test_report",
+      "value": "tests/Feature/PostmanOperationalContractTest.php",
+      "description": "Reconciliación ejecutable uno-a-uno entre Master OpenAPI operationId, cobertura Postman, método y path.",
+      "scope": {"level": "phase", "id": "postman_contract"},
+      "created_at": "2026-09-23T18:44:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT004-AUDIT-EXPORT-QA",
+      "type": "test_report",
+      "value": "tests/Feature/GeneratedSemanticAuditExportTest.php",
+      "description": "Verifica que auditoría semántica y su QA viajen solo dentro de exports con audit habilitado, sin infraestructura dormida cuando está deshabilitado.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T18:44:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT004-RUNTIME-ACCEPTANCE",
+      "type": "ci_run",
+      "value": "https://github.com/LuisHdezE/ApiBlueprint/actions/runs/35924101353",
+      "description": "CI #111 ejecutó Newman 6.2.1 contra una API realmente exportada: 15 requests, 36 assertions, cero fallos; los siete eventos semánticos canónicos fueron observados sin marcadores sensibles.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T18:44:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT004-RUNTIME-SCRIPT",
+      "type": "test_report",
+      "value": "scripts/run-postman-operational-contract.sh",
+      "description": "Runner reproducible que exporta, instala, migra, siembra, ejecuta Newman y valida audit.jsonl, publicando solo resúmenes sanitizados.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T18:44:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT004-DOCUMENTATION",
+      "type": "file",
+      "value": "docs/delivery/operational-contract-audit-qa.md",
+      "description": "Contrato operativo, auditoría semántica, QA reproducible, límites y no-claims de BP-ADOPT-004.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T18:44:00-03:00",
+      "producer": "mixed"
+    }
+  ]
+}
