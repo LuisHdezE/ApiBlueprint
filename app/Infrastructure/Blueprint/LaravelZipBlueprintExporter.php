@@ -96,8 +96,14 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
 
         $hasAuthLogin = $this->hasEndpoint($manifest, 'auth.login');
         $hasAuthLogout = $this->hasEndpoint($manifest, 'auth.logout');
+        $hasUsersList = $this->hasEndpoint($manifest, 'users.list');
         $hasProductsShow = $this->hasEndpoint($manifest, 'products.show');
         $hasProductsList = $this->hasEndpoint($manifest, 'products.list');
+
+        if ($hasProductsList || $hasUsersList) {
+            $files['app/Infrastructure/Database/DatabaseQueryPaginator.php'] = $this->databaseQueryPaginatorFile();
+            $files['app/Presentation/Http/Support/ListQueryValidator.php'] = $this->listQueryValidatorFile($manifest);
+        }
 
         if ($hasAuthLogin) {
             $files['database/database.sqlite'] = '';
@@ -119,6 +125,15 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             $files['tests/Feature/AuthLogoutVerticalSliceTest.php'] = $this->authLogoutVerticalSliceTestFile();
         }
 
+        if ($hasUsersList) {
+            $files['app/Application/Users/Contracts/UserListRepository.php'] = $this->userListRepositoryContractFile();
+            $files['app/Application/Users/Data/UserListItem.php'] = $this->userListItemFile();
+            $files['app/Application/Users/Data/UserPage.php'] = $this->userPageFile();
+            $files['app/Application/Users/UseCases/ListUsers.php'] = $this->listUsersUseCaseFile();
+            $files['app/Infrastructure/Users/DatabaseUserListRepository.php'] = $this->databaseUserListRepositoryFile();
+            $files['tests/Feature/UsersListVerticalSliceTest.php'] = $this->usersListVerticalSliceTestFile($manifest);
+        }
+
         if ($hasProductsShow || $hasProductsList) {
             $files['database/database.sqlite'] = '';
             $files['database/migrations/2026_01_01_000000_create_products_table.php'] = $this->productsMigrationFile();
@@ -137,7 +152,6 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             $files['app/Application/Products/Data/ProductPage.php'] = $this->productPageFile();
             $files['app/Application/Products/UseCases/ListProducts.php'] = $this->listProductsUseCaseFile();
             $files['app/Infrastructure/Products/DatabaseProductListRepository.php'] = $this->databaseProductListRepositoryFile();
-            $files['app/Presentation/Http/Support/ProductListQueryValidator.php'] = $this->productListQueryValidatorFile($manifest);
             $files['tests/Feature/ProductsListVerticalSliceTest.php'] = $this->productsListVerticalSliceTestFile($manifest);
         }
 
@@ -185,7 +199,7 @@ final class LaravelZipBlueprintExporter implements BlueprintExporter
             'phpunit/phpunit' => '^12.5',
         ];
 
-        if ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) {
+        if ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'users.list') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) {
             $requireDev['mockery/mockery'] = '^1.6';
         }
 
@@ -390,6 +404,9 @@ PHP;
         }
         if ($endpoint['id'] === 'auth.logout') {
             return $this->authLogoutControllerFile($className);
+        }
+        if ($endpoint['id'] === 'users.list') {
+            return $this->usersListControllerFile($className);
         }
         if ($endpoint['id'] === 'products.list') {
             return $this->productsListControllerFile($className);
@@ -709,6 +726,181 @@ final class QueryOptionsParser
 PHP;
     }
 
+    private function databaseQueryPaginatorFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Infrastructure\Database;
+
+use App\Application\Shared\Query\QueryOptions;
+use Illuminate\Database\Query\Builder;
+use InvalidArgumentException;
+use JsonException;
+
+final class DatabaseQueryPaginator
+{
+    public function sorts(?string $sort, array $allowedFields): array
+    {
+        if (! in_array('id', $allowedFields, true)) {
+            throw new InvalidArgumentException('Stable lists require id as a tie breaker.');
+        }
+
+        $tokens = $sort === null || trim($sort) === '' ? ['id'] : explode(',', $sort);
+        $sorts = [];
+        $seen = [];
+
+        foreach ($tokens as $token) {
+            $token = trim($token);
+            $direction = str_starts_with($token, '-') ? 'desc' : 'asc';
+            $field = ltrim($token, '-');
+            if (! in_array($field, $allowedFields, true) || isset($seen[$field])) {
+                throw new InvalidArgumentException('Unsupported sort definition.');
+            }
+            $seen[$field] = true;
+            $sorts[] = [$field, $direction];
+        }
+
+        if (! isset($seen['id'])) {
+            $sorts[] = ['id', 'asc'];
+        }
+
+        return $sorts;
+    }
+
+    public function paginate(Builder $query, array $sorts, QueryOptions $options): array
+    {
+        return match ($options->paginationStrategy) {
+            'cursor' => $this->cursorPage($query, $sorts, $options),
+            'offset' => $this->offsetPage($query, $sorts, $options),
+            default => throw new InvalidArgumentException('Unsupported pagination strategy.'),
+        };
+    }
+
+    private function offsetPage(Builder $query, array $sorts, QueryOptions $options): array
+    {
+        $total = (clone $query)->count();
+        $this->applySorts($query, $sorts);
+        $rows = $query
+            ->offset(($options->pageNumber - 1) * $options->pageSize)
+            ->limit($options->pageSize)
+            ->get();
+        $totalPages = $total === 0 ? 0 : (int) ceil($total / $options->pageSize);
+
+        return [
+            'items' => $rows->all(),
+            'meta' => [
+                'strategy' => 'offset',
+                'page_size' => $options->pageSize,
+                'page_number' => $options->pageNumber,
+                'total' => $total,
+                'total_pages' => $totalPages,
+                'has_more' => $options->pageNumber < $totalPages,
+            ],
+        ];
+    }
+
+    private function cursorPage(Builder $query, array $sorts, QueryOptions $options): array
+    {
+        if ($options->cursor !== null && $options->cursor !== '') {
+            $values = $this->decodeCursor($options->cursor, $sorts);
+            $this->applyCursor($query, $sorts, $values);
+        }
+
+        $this->applySorts($query, $sorts);
+        $rows = $query->limit($options->pageSize + 1)->get();
+        $hasMore = $rows->count() > $options->pageSize;
+        $visibleRows = $rows->take($options->pageSize)->values();
+        $lastRow = $visibleRows->last();
+        $nextCursor = $hasMore && is_object($lastRow) ? $this->encodeCursor($sorts, $lastRow) : null;
+
+        return [
+            'items' => $visibleRows->all(),
+            'meta' => [
+                'strategy' => 'cursor',
+                'page_size' => $options->pageSize,
+                'has_more' => $hasMore,
+                'next_cursor' => $nextCursor,
+            ],
+        ];
+    }
+
+    private function applySorts(Builder $query, array $sorts): void
+    {
+        foreach ($sorts as [$field, $direction]) {
+            $query->orderBy($field, $direction);
+        }
+    }
+
+    private function applyCursor(Builder $query, array $sorts, array $values): void
+    {
+        $query->where(function (Builder $outer) use ($sorts, $values): void {
+            foreach ($sorts as $index => [$field, $direction]) {
+                $outer->orWhere(function (Builder $branch) use ($sorts, $values, $index, $field, $direction): void {
+                    for ($previous = 0; $previous < $index; $previous++) {
+                        [$previousField] = $sorts[$previous];
+                        $branch->where($previousField, '=', $values[$previousField]);
+                    }
+                    $branch->where($field, $direction === 'asc' ? '>' : '<', $values[$field]);
+                });
+            }
+        });
+    }
+
+    private function encodeCursor(array $sorts, object $row): string
+    {
+        $values = [];
+        foreach ($sorts as [$field]) {
+            $values[$field] = (string) $row->{$field};
+        }
+        $payload = json_encode([
+            'sort' => $this->serializedSorts($sorts),
+            'values' => $values,
+        ], JSON_THROW_ON_ERROR);
+
+        return rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
+    }
+
+    private function decodeCursor(string $cursor, array $sorts): array
+    {
+        try {
+            $base64 = strtr($cursor, '-_', '+/');
+            $base64 .= str_repeat('=', (4 - strlen($base64) % 4) % 4);
+            $decoded = base64_decode($base64, true);
+            if ($decoded === false) {
+                throw new InvalidArgumentException('Invalid cursor encoding.');
+            }
+            $payload = json_decode($decoded, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            throw new InvalidArgumentException('Invalid cursor payload.');
+        }
+
+        if (! is_array($payload)
+            || ($payload['sort'] ?? null) !== $this->serializedSorts($sorts)
+            || ! is_array($payload['values'] ?? null)) {
+            throw new InvalidArgumentException('Cursor does not match sorting.');
+        }
+
+        $values = [];
+        foreach ($sorts as [$field]) {
+            $value = $payload['values'][$field] ?? null;
+            if (! is_string($value)) {
+                throw new InvalidArgumentException('Cursor is missing sort values.');
+            }
+            $values[$field] = $value;
+        }
+
+        return $values;
+    }
+
+    private function serializedSorts(array $sorts): array
+    {
+        return array_map(static fn (array $sort): string => ($sort[1] === 'desc' ? '-' : '').$sort[0], $sorts);
+    }
+}
+PHP;
+    }
+
     private function serviceProviderFile(array $manifest): string
     {
         $imports = ['use Illuminate\\Support\\ServiceProvider;'];
@@ -725,6 +917,11 @@ PHP;
             $imports[] = 'use App\\Application\\Authentication\\Contracts\\TokenRevocationGateway;';
             $imports[] = 'use App\\Infrastructure\\Authentication\\SanctumTokenRevocationGateway;';
             $registerLines[] = '        $this->app->bind(TokenRevocationGateway::class, SanctumTokenRevocationGateway::class);';
+        }
+        if ($this->hasEndpoint($manifest, 'users.list')) {
+            $imports[] = 'use App\\Application\\Users\\Contracts\\UserListRepository;';
+            $imports[] = 'use App\\Infrastructure\\Users\\DatabaseUserListRepository;';
+            $registerLines[] = '        $this->app->bind(UserListRepository::class, DatabaseUserListRepository::class);';
         }
         if ($this->hasEndpoint($manifest, 'products.show')) {
             $imports[] = 'use App\\Application\\Products\\Contracts\\ProductReadRepository;';
@@ -832,7 +1029,7 @@ PHP;
 
         $stubEndpoints = array_values(array_filter(
             $manifest['endpoints'],
-            static fn (array $endpoint): bool => ! in_array($endpoint['id'], ['auth.login', 'auth.logout', 'products.list', 'products.show'], true),
+            static fn (array $endpoint): bool => ! in_array($endpoint['id'], ['auth.login', 'auth.logout', 'users.list', 'products.list', 'products.show'], true),
         ));
 
         if ($stubEndpoints === []) {
@@ -925,7 +1122,7 @@ PHP;
 
     private function phpUnitFile(array $manifest): string
     {
-        $databaseEnvironment = ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list'))
+        $databaseEnvironment = ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'users.list') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list'))
             ? "        <env name=\"DB_CONNECTION\" value=\"sqlite\"/>\n        <env name=\"DB_DATABASE\" value=\":memory:\"/>\n"
             : '';
 
@@ -1004,14 +1201,21 @@ XML;
                             if ($endpoint['id'] === 'products.list') {
                                 $parameters[] = '        - { name: "filter[id]", in: query, schema: { type: string }, description: "Filtra por identificador exacto." }';
                                 $parameters[] = '        - { name: "filter[name]", in: query, schema: { type: string }, description: "Filtra por coincidencia parcial del nombre." }';
+                            } elseif ($endpoint['id'] === 'users.list') {
+                                $parameters[] = '        - { name: "filter[id]", in: query, schema: { type: string }, description: "Filtra por identificador exacto." }';
+                                $parameters[] = '        - { name: "filter[name]", in: query, schema: { type: string }, description: "Filtra por coincidencia parcial del nombre." }';
+                                $parameters[] = '        - { name: "filter[email]", in: query, schema: { type: string }, description: "Filtra por coincidencia parcial del correo electrónico." }';
+                                $parameters[] = '        - { name: "filter[role]", in: query, schema: { type: string }, description: "Filtra por rol exacto." }';
                             } else {
                                 $parameters[] = '        - { name: "filter[field]", in: query, schema: { type: string }, description: "Filtro por campo permitido." }';
                             }
                         }
                         if ($governance['sorting']) {
-                            $description = $endpoint['id'] === 'products.list'
-                                ? 'Campos permitidos: id y name; separados por coma; prefijo - para descendente.'
-                                : 'Campos de orden separados por coma; prefijo - para descendente.';
+                            $description = match ($endpoint['id']) {
+                                'products.list' => 'Campos permitidos: id y name; separados por coma; prefijo - para descendente.',
+                                'users.list' => 'Campos permitidos: id, name, email y role; separados por coma; prefijo - para descendente.',
+                                default => 'Campos de orden separados por coma; prefijo - para descendente.',
+                            };
                             $parameters[] = '        - { name: sort, in: query, schema: { type: string }, description: '.$this->yamlString($description).' }';
                         }
                     }
@@ -1038,10 +1242,25 @@ XML;
                         $lines[] = "        '401':";
                         $lines[] = '          description: "Token de acceso ausente o inválido."';
                         $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
+                    } elseif ($endpoint['id'] === 'users.list') {
+                        $lines[] = "        '200':";
+                        $lines[] = '          description: "Listado paginado de usuarios."';
+                        $lines[] = '          content: { application/json: { schema: { type: object, required: [data, meta], properties: { data: { type: array, items: { $ref: "#/components/schemas/UserListItem" } }, meta: { $ref: "#/components/schemas/ListMeta" } } } } }';
+                        $lines[] = "        '401':";
+                        $lines[] = '          description: "Autenticación requerida."';
+                        $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
+                        if ($governance['rbac']) {
+                            $lines[] = "        '403':";
+                            $lines[] = '          description: "Se requieren privilegios de administrador."';
+                            $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
+                        }
+                        $lines[] = "        '422':";
+                        $lines[] = '          description: "Parámetros de listado inválidos."';
+                        $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
                     } elseif ($endpoint['id'] === 'products.list') {
                         $lines[] = "        '200':";
                         $lines[] = '          description: "Listado paginado de productos."';
-                        $lines[] = '          content: { application/json: { schema: { type: object, required: [data, meta], properties: { data: { type: array, items: { $ref: "#/components/schemas/Product" } }, meta: { $ref: "#/components/schemas/ProductListMeta" } } } } }';
+                        $lines[] = '          content: { application/json: { schema: { type: object, required: [data, meta], properties: { data: { type: array, items: { $ref: "#/components/schemas/Product" } }, meta: { $ref: "#/components/schemas/ListMeta" } } } } }';
                         $lines[] = "        '422':";
                         $lines[] = '          description: "Parámetros de listado inválidos."';
                         $lines[] = '          content: { application/problem+json: { schema: { $ref: "#/components/schemas/ProblemDetails" } } }';
@@ -1112,8 +1331,18 @@ XML;
             $lines[] = '        id: { type: string }';
             $lines[] = '        name: { type: string }';
         }
-        if ($this->hasEndpoint($manifest, 'products.list')) {
-            $lines[] = '    ProductListMeta:';
+        if ($this->hasEndpoint($manifest, 'users.list')) {
+            $lines[] = '    UserListItem:';
+            $lines[] = '      type: object';
+            $lines[] = '      required: [id, name, email, role]';
+            $lines[] = '      properties:';
+            $lines[] = '        id: { type: string }';
+            $lines[] = '        name: { type: string }';
+            $lines[] = '        email: { type: string, format: email }';
+            $lines[] = '        role: { type: string }';
+        }
+        if ($this->hasEndpoint($manifest, 'products.list') || $this->hasEndpoint($manifest, 'users.list')) {
+            $lines[] = '    ListMeta:';
             $lines[] = '      type: object';
             $lines[] = '      required: [strategy, page_size, has_more]';
             $lines[] = '      properties:';
@@ -1141,14 +1370,14 @@ XML;
     {
         $rows = [];
         foreach ($manifest['endpoints'] as $endpoint) {
-            $status = in_array($endpoint['id'], ['auth.login', 'auth.logout', 'products.list', 'products.show'], true) ? 'Ejecutable' : 'Stub 501';
+            $status = in_array($endpoint['id'], ['auth.login', 'auth.logout', 'users.list', 'products.list', 'products.show'], true) ? 'Ejecutable' : 'Stub 501';
             $rows[] = "| {$endpoint['method']} | `{$endpoint['path']}` | {$endpoint['summary']} | {$endpoint['exposure']} | $status |";
         }
         $table = $rows === [] ? '_No se seleccionaron endpoints._' : implode("\n", $rows);
         $governance = $manifest['governance'];
         $migrationStep = ($this->hasEndpoint($manifest, 'auth.login') || $this->hasEndpoint($manifest, 'products.show') || $this->hasEndpoint($manifest, 'products.list')) ? "php artisan migrate\n" : '';
 
-        return "# {$manifest['project']['name']}\n\nSolución Laravel generada por **ApiBlueprint**. El código se mantiene en inglés; mensajes, errores y OpenAPI se presentan en español.\n\n## Gobierno exportado\n\n- Autenticación: `{$governance['authentication']}`\n- RBAC: ".($governance['rbac'] ? 'sí' : 'no')."\n- Correlation ID: ".($governance['correlation_id'] ? 'sí' : 'no')."\n- Rate limit: ".($governance['rate_limiting']['enabled'] ? $governance['rate_limiting']['requests_per_minute'].' solicitudes/minuto' : 'deshabilitado')."\n- Paginación: `{$governance['pagination']['strategy']}`\n- Idempotencia: ".($governance['idempotency'] ? 'sí' : 'no')."\n- Auditoría: ".($governance['audit'] ? 'sí' : 'no')."\n\n## Endpoints exportados\n\n| Método | Ruta | Descripción | Exposición | Implementación |\n| --- | --- | --- | --- | --- |\n$table\n\n## Inicio rápido\n\n```bash\ncomposer install\ncp .env.example .env\nphp artisan key:generate\n{$migrationStep}php artisan test\nphp artisan serve\n```\n\n`auth.login`, `auth.logout`, `products.list` y `products.show` se exportan como vertical slices ejecutables cuando están seleccionados. Los demás endpoints conservan HTTP 501 hasta que su receta ejecutable sea incorporada. Los endpoints y capacidades no seleccionados no se incluyen como infraestructura dormida.\n";
+        return "# {$manifest['project']['name']}\n\nSolución Laravel generada por **ApiBlueprint**. El código se mantiene en inglés; mensajes, errores y OpenAPI se presentan en español.\n\n## Gobierno exportado\n\n- Autenticación: `{$governance['authentication']}`\n- RBAC: ".($governance['rbac'] ? 'sí' : 'no')."\n- Correlation ID: ".($governance['correlation_id'] ? 'sí' : 'no')."\n- Rate limit: ".($governance['rate_limiting']['enabled'] ? $governance['rate_limiting']['requests_per_minute'].' solicitudes/minuto' : 'deshabilitado')."\n- Paginación: `{$governance['pagination']['strategy']}`\n- Idempotencia: ".($governance['idempotency'] ? 'sí' : 'no')."\n- Auditoría: ".($governance['audit'] ? 'sí' : 'no')."\n\n## Endpoints exportados\n\n| Método | Ruta | Descripción | Exposición | Implementación |\n| --- | --- | --- | --- | --- |\n$table\n\n## Inicio rápido\n\n```bash\ncomposer install\ncp .env.example .env\nphp artisan key:generate\n{$migrationStep}php artisan test\nphp artisan serve\n```\n\n`auth.login`, `auth.logout`, `users.list`, `products.list` y `products.show` se exportan como vertical slices ejecutables cuando están seleccionados. Los demás endpoints conservan HTTP 501 hasta que su receta ejecutable sea incorporada. Los endpoints y capacidades no seleccionados no se incluyen como infraestructura dormida.\n";
     }
 
     private function controllerClassName(string $endpointId): string
@@ -1676,8 +1905,8 @@ PHP;
 namespace App\Presentation\Http\Controllers\Generated;
 
 use App\Application\Products\UseCases\ListProducts;
+use App\Presentation\Http\Support\ListQueryValidator;
 use App\Presentation\Http\Support\ProblemDetails;
-use App\Presentation\Http\Support\ProductListQueryValidator;
 use App\Presentation\Http\Support\QueryOptionsParser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -1688,14 +1917,14 @@ final readonly class $className
     public function __construct(
         private ListProducts \$listProducts,
         private QueryOptionsParser \$queryOptionsParser,
-        private ProductListQueryValidator \$queryValidator,
+        private ListQueryValidator \$queryValidator,
     ) {
         //
     }
 
     public function __invoke(Request \$request): JsonResponse
     {
-        \$this->queryValidator->validate(\$request);
+        \$this->queryValidator->validate(\$request, ['id', 'name'], ['id', 'name']);
 
         try {
             \$page = \$this->listProducts->handle(\$this->queryOptionsParser->parse(\$request));
@@ -1799,24 +2028,28 @@ use App\Application\Products\Contracts\ProductListRepository;
 use App\Application\Products\Data\ProductPage;
 use App\Application\Shared\Query\QueryOptions;
 use App\Domain\Products\Product;
+use App\Infrastructure\Database\DatabaseQueryPaginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
-use JsonException;
 
-final class DatabaseProductListRepository implements ProductListRepository
+final readonly class DatabaseProductListRepository implements ProductListRepository
 {
+    public function __construct(private DatabaseQueryPaginator $paginator)
+    {
+        //
+    }
+
     public function paginate(QueryOptions $options): ProductPage
     {
         $query = DB::table('products')->select(['id', 'name']);
         $this->applyFilters($query, $options->filters);
-        $sorts = $this->sorts($options->sort);
+        $sorts = $this->paginator->sorts($options->sort, ['id', 'name']);
+        $page = $this->paginator->paginate($query, $sorts, $options);
 
-        return match ($options->paginationStrategy) {
-            'cursor' => $this->cursorPage($query, $sorts, $options),
-            'offset' => $this->offsetPage($query, $sorts, $options),
-            default => throw new InvalidArgumentException('Unsupported pagination strategy.'),
-        };
+        return new ProductPage(
+            items: $this->products($page['items']),
+            meta: $page['meta'],
+        );
     }
 
     private function applyFilters(Builder $query, array $filters): void
@@ -1834,151 +2067,6 @@ final class DatabaseProductListRepository implements ProductListRepository
         }
     }
 
-    private function sorts(?string $sort): array
-    {
-        $tokens = $sort === null || trim($sort) === '' ? ['id'] : explode(',', $sort);
-        $sorts = [];
-        $seen = [];
-
-        foreach ($tokens as $token) {
-            $token = trim($token);
-            $direction = str_starts_with($token, '-') ? 'desc' : 'asc';
-            $field = ltrim($token, '-');
-            if (! in_array($field, ['id', 'name'], true) || isset($seen[$field])) {
-                throw new InvalidArgumentException('Unsupported sort definition.');
-            }
-            $seen[$field] = true;
-            $sorts[] = [$field, $direction];
-        }
-
-        if (! isset($seen['id'])) {
-            $sorts[] = ['id', 'asc'];
-        }
-
-        return $sorts;
-    }
-
-    private function offsetPage(Builder $query, array $sorts, QueryOptions $options): ProductPage
-    {
-        $total = (clone $query)->count();
-        $this->applySorts($query, $sorts);
-        $rows = $query
-            ->offset(($options->pageNumber - 1) * $options->pageSize)
-            ->limit($options->pageSize)
-            ->get();
-        $totalPages = $total === 0 ? 0 : (int) ceil($total / $options->pageSize);
-
-        return new ProductPage(
-            items: $this->products($rows->all()),
-            meta: [
-                'strategy' => 'offset',
-                'page_size' => $options->pageSize,
-                'page_number' => $options->pageNumber,
-                'total' => $total,
-                'total_pages' => $totalPages,
-                'has_more' => $options->pageNumber < $totalPages,
-            ],
-        );
-    }
-
-    private function cursorPage(Builder $query, array $sorts, QueryOptions $options): ProductPage
-    {
-        if ($options->cursor !== null && $options->cursor !== '') {
-            $values = $this->decodeCursor($options->cursor, $sorts);
-            $this->applyCursor($query, $sorts, $values);
-        }
-
-        $this->applySorts($query, $sorts);
-        $rows = $query->limit($options->pageSize + 1)->get();
-        $hasMore = $rows->count() > $options->pageSize;
-        $visibleRows = $rows->take($options->pageSize)->values();
-        $lastRow = $visibleRows->last();
-        $nextCursor = $hasMore && is_object($lastRow) ? $this->encodeCursor($sorts, $lastRow) : null;
-
-        return new ProductPage(
-            items: $this->products($visibleRows->all()),
-            meta: [
-                'strategy' => 'cursor',
-                'page_size' => $options->pageSize,
-                'has_more' => $hasMore,
-                'next_cursor' => $nextCursor,
-            ],
-        );
-    }
-
-    private function applySorts(Builder $query, array $sorts): void
-    {
-        foreach ($sorts as [$field, $direction]) {
-            $query->orderBy($field, $direction);
-        }
-    }
-
-    private function applyCursor(Builder $query, array $sorts, array $values): void
-    {
-        $query->where(function (Builder $outer) use ($sorts, $values): void {
-            foreach ($sorts as $index => [$field, $direction]) {
-                $outer->orWhere(function (Builder $branch) use ($sorts, $values, $index, $field, $direction): void {
-                    for ($previous = 0; $previous < $index; $previous++) {
-                        [$previousField] = $sorts[$previous];
-                        $branch->where($previousField, '=', $values[$previousField]);
-                    }
-                    $branch->where($field, $direction === 'asc' ? '>' : '<', $values[$field]);
-                });
-            }
-        });
-    }
-
-    private function encodeCursor(array $sorts, object $row): string
-    {
-        $values = [];
-        foreach ($sorts as [$field]) {
-            $values[$field] = (string) $row->{$field};
-        }
-        $payload = json_encode([
-            'sort' => $this->serializedSorts($sorts),
-            'values' => $values,
-        ], JSON_THROW_ON_ERROR);
-
-        return rtrim(strtr(base64_encode($payload), '+/', '-_'), '=');
-    }
-
-    private function decodeCursor(string $cursor, array $sorts): array
-    {
-        try {
-            $base64 = strtr($cursor, '-_', '+/');
-            $base64 .= str_repeat('=', (4 - strlen($base64) % 4) % 4);
-            $decoded = base64_decode($base64, true);
-            if ($decoded === false) {
-                throw new InvalidArgumentException('Invalid cursor encoding.');
-            }
-            $payload = json_decode($decoded, true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException) {
-            throw new InvalidArgumentException('Invalid cursor payload.');
-        }
-
-        if (! is_array($payload)
-            || ($payload['sort'] ?? null) !== $this->serializedSorts($sorts)
-            || ! is_array($payload['values'] ?? null)) {
-            throw new InvalidArgumentException('Cursor does not match sorting.');
-        }
-
-        $values = [];
-        foreach ($sorts as [$field]) {
-            $value = $payload['values'][$field] ?? null;
-            if (! is_string($value)) {
-                throw new InvalidArgumentException('Cursor is missing sort values.');
-            }
-            $values[$field] = $value;
-        }
-
-        return $values;
-    }
-
-    private function serializedSorts(array $sorts): array
-    {
-        return array_map(static fn (array $sort): string => ($sort[1] === 'desc' ? '-' : '').$sort[0], $sorts);
-    }
-
     private function products(array $rows): array
     {
         return array_map(
@@ -1990,7 +2078,7 @@ final class DatabaseProductListRepository implements ProductListRepository
 PHP;
     }
 
-    private function productListQueryValidatorFile(array $manifest): string
+    private function listQueryValidatorFile(array $manifest): string
     {
         $pagination = $manifest['governance']['pagination'];
         $maxSize = (int) $pagination['max_size'];
@@ -1999,39 +2087,8 @@ PHP;
         $strategyRule = $strategy === 'cursor'
             ? "            'page.cursor' => ['sometimes', 'string', 'max:2048'],"
             : "            'page.number' => ['sometimes', 'integer', 'min:1'],";
-        $filterRules = $manifest['governance']['filtering']
-            ? "            'filter' => ['sometimes', 'array:id,name'],\n            'filter.id' => ['sometimes', 'string', 'max:255'],\n            'filter.name' => ['sometimes', 'string', 'max:255'],"
-            : "            'filter' => ['prohibited'],";
-        $sortRule = $manifest['governance']['sorting']
-            ? "            'sort' => ['sometimes', 'string', 'max:255'],"
-            : "            'sort' => ['prohibited'],";
-        $sortAfter = $manifest['governance']['sorting']
-            ? <<<'PHP'
-        $validator->after(function ($validator) use ($request): void {
-            $sort = $request->query('sort');
-            if ($sort === null || $sort === '') {
-                return;
-            }
-            if (! is_string($sort)) {
-                $validator->errors()->add('sort', 'El parámetro sort debe ser una cadena.');
-
-                return;
-            }
-
-            $seen = [];
-            foreach (explode(',', $sort) as $token) {
-                $token = trim($token);
-                $field = ltrim($token, '-');
-                if ($token === '' || ! in_array($field, ['id', 'name'], true) || isset($seen[$field])) {
-                    $validator->errors()->add('sort', 'sort solo admite id y name, sin campos repetidos.');
-
-                    return;
-                }
-                $seen[$field] = true;
-            }
-        });
-PHP
-            : '';
+        $filtering = $manifest['governance']['filtering'] ? 'true' : 'false';
+        $sorting = $manifest['governance']['sorting'] ? 'true' : 'false';
 
         return <<<PHP
 <?php
@@ -2041,29 +2098,426 @@ namespace App\Presentation\Http\Support;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-final class ProductListQueryValidator
+final class ListQueryValidator
 {
-    public function validate(Request \$request): void
+    public function validate(Request \$request, array \$filterFields, array \$sortFields): void
     {
-        \$validator = Validator::make(\$request->query(), [
+        \$rules = [
             'page' => ['sometimes', '$pageRule'],
             'page.size' => ['sometimes', 'integer', 'min:1', 'max:$maxSize'],
 $strategyRule
-$filterRules
-$sortRule
-        ], [
+        ];
+
+        if ($filtering) {
+            \$rules['filter'] = ['sometimes', 'array:'.implode(',', \$filterFields)];
+            foreach (\$filterFields as \$field) {
+                \$rules['filter.'.\$field] = ['sometimes', 'string', 'max:255'];
+            }
+        } else {
+            \$rules['filter'] = ['prohibited'];
+        }
+
+        \$rules['sort'] = $sorting ? ['sometimes', 'string', 'max:255'] : ['prohibited'];
+
+        \$validator = Validator::make(\$request->query(), \$rules, [
             'page.array' => 'Los parámetros de paginación no son válidos para la estrategia configurada.',
             'page.size.integer' => 'page[size] debe ser un entero.',
             'page.size.min' => 'page[size] debe ser mayor que cero.',
             'page.size.max' => 'page[size] supera el máximo permitido.',
             'page.number.integer' => 'page[number] debe ser un entero.',
             'page.number.min' => 'page[number] debe ser mayor que cero.',
-            'filter.array' => 'filter solo admite los campos id y name.',
+            'filter.array' => 'filter contiene campos no permitidos para este listado.',
             'filter.prohibited' => 'Los filtros están deshabilitados para este blueprint.',
             'sort.prohibited' => 'El ordenamiento está deshabilitado para este blueprint.',
         ]);
-$sortAfter
+
+        if ($sorting) {
+            \$validator->after(function (\$validator) use (\$request, \$sortFields): void {
+                \$sort = \$request->query('sort');
+                if (\$sort === null || \$sort === '') {
+                    return;
+                }
+                if (! is_string(\$sort)) {
+                    \$validator->errors()->add('sort', 'El parámetro sort debe ser una cadena.');
+
+                    return;
+                }
+
+                \$seen = [];
+                foreach (explode(',', \$sort) as \$token) {
+                    \$token = trim(\$token);
+                    \$field = ltrim(\$token, '-');
+                    if (\$token === '' || ! in_array(\$field, \$sortFields, true) || isset(\$seen[\$field])) {
+                        \$validator->errors()->add('sort', 'sort contiene campos no permitidos o repetidos.');
+
+                        return;
+                    }
+                    \$seen[\$field] = true;
+                }
+            });
+        }
+
         \$validator->validate();
+    }
+}
+PHP;
+    }
+
+    private function usersListControllerFile(string $className): string
+    {
+        return <<<PHP
+<?php
+
+namespace App\Presentation\Http\Controllers\Generated;
+
+use App\Application\Users\UseCases\ListUsers;
+use App\Presentation\Http\Support\ListQueryValidator;
+use App\Presentation\Http\Support\ProblemDetails;
+use App\Presentation\Http\Support\QueryOptionsParser;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use InvalidArgumentException;
+
+final readonly class $className
+{
+    public function __construct(
+        private ListUsers \$listUsers,
+        private QueryOptionsParser \$queryOptionsParser,
+        private ListQueryValidator \$queryValidator,
+    ) {
+        //
+    }
+
+    public function __invoke(Request \$request): JsonResponse
+    {
+        \$this->queryValidator->validate(
+            \$request,
+            ['id', 'name', 'email', 'role'],
+            ['id', 'name', 'email', 'role'],
+        );
+
+        try {
+            \$page = \$this->listUsers->handle(\$this->queryOptionsParser->parse(\$request));
+        } catch (InvalidArgumentException) {
+            return ProblemDetails::response(
+                request: \$request,
+                status: 422,
+                title: 'Cursor de paginación inválido',
+                detail: 'El cursor no corresponde al orden solicitado o tiene un formato inválido.',
+                type: 'https://eliasworks.uy/problems/invalid-pagination-cursor',
+            );
+        }
+
+        return response()->json(\$page->toArray());
+    }
+}
+PHP;
+    }
+
+    private function userListRepositoryContractFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Users\Contracts;
+
+use App\Application\Shared\Query\QueryOptions;
+use App\Application\Users\Data\UserPage;
+
+interface UserListRepository
+{
+    public function paginate(QueryOptions $options): UserPage;
+}
+PHP;
+    }
+
+    private function userListItemFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Users\Data;
+
+final readonly class UserListItem
+{
+    public function __construct(
+        public string $id,
+        public string $name,
+        public string $email,
+        public string $role,
+    ) {
+        //
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'role' => $this->role,
+        ];
+    }
+}
+PHP;
+    }
+
+    private function userPageFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Users\Data;
+
+final readonly class UserPage
+{
+    /** @param list<UserListItem> $items */
+    public function __construct(
+        public array $items,
+        public array $meta,
+    ) {
+        //
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'data' => array_map(static fn (UserListItem $user): array => $user->toArray(), $this->items),
+            'meta' => $this->meta,
+        ];
+    }
+}
+PHP;
+    }
+
+    private function listUsersUseCaseFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Application\Users\UseCases;
+
+use App\Application\Shared\Query\QueryOptions;
+use App\Application\Users\Contracts\UserListRepository;
+use App\Application\Users\Data\UserPage;
+
+final readonly class ListUsers
+{
+    public function __construct(private UserListRepository $users)
+    {
+        //
+    }
+
+    public function handle(QueryOptions $options): UserPage
+    {
+        return $this->users->paginate($options);
+    }
+}
+PHP;
+    }
+
+    private function databaseUserListRepositoryFile(): string
+    {
+        return <<<'PHP'
+<?php
+
+namespace App\Infrastructure\Users;
+
+use App\Application\Shared\Query\QueryOptions;
+use App\Application\Users\Contracts\UserListRepository;
+use App\Application\Users\Data\UserListItem;
+use App\Application\Users\Data\UserPage;
+use App\Infrastructure\Database\DatabaseQueryPaginator;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\DB;
+
+final readonly class DatabaseUserListRepository implements UserListRepository
+{
+    public function __construct(private DatabaseQueryPaginator $paginator)
+    {
+        //
+    }
+
+    public function paginate(QueryOptions $options): UserPage
+    {
+        $query = DB::table('users')->select(['id', 'name', 'email', 'role']);
+        $this->applyFilters($query, $options->filters);
+        $sorts = $this->paginator->sorts($options->sort, ['id', 'name', 'email', 'role']);
+        $page = $this->paginator->paginate($query, $sorts, $options);
+
+        return new UserPage(
+            items: array_map(
+                static fn (object $row): UserListItem => new UserListItem(
+                    id: (string) $row->id,
+                    name: (string) $row->name,
+                    email: (string) $row->email,
+                    role: (string) $row->role,
+                ),
+                $page['items'],
+            ),
+            meta: $page['meta'],
+        );
+    }
+
+    private function applyFilters(Builder $query, array $filters): void
+    {
+        foreach ($filters as $field => $value) {
+            if (! is_scalar($value) || trim((string) $value) === '') {
+                continue;
+            }
+
+            if ($field === 'id') {
+                $query->where('id', (string) $value);
+            } elseif ($field === 'name') {
+                $query->where('name', 'like', '%'.(string) $value.'%');
+            } elseif ($field === 'email') {
+                $query->where('email', 'like', '%'.(string) $value.'%');
+            } elseif ($field === 'role') {
+                $query->where('role', (string) $value);
+            }
+        }
+    }
+}
+PHP;
+    }
+
+    private function usersListVerticalSliceTestFile(array $manifest): string
+    {
+        $strategy = $manifest['governance']['pagination']['strategy'];
+        $paginationTest = $strategy === 'cursor'
+            ? <<<'PHP'
+    public function test_admin_can_page_users_with_a_keyset_cursor_without_passwords(): void
+    {
+        $this->seedRegularUsers();
+        $token = $this->tokenFor('admin@example.com', 'admin');
+
+        $first = $this->withToken($token)
+            ->getJson('/api/v1/users?filter[role]=user&page[size]=2&sort=name')
+            ->assertOk()
+            ->assertJsonPath('meta.strategy', 'cursor')
+            ->assertJsonPath('meta.has_more', true)
+            ->assertJsonPath('data.0.name', 'Alpha')
+            ->assertJsonPath('data.1.name', 'Beta');
+
+        $this->assertArrayNotHasKey('password', $first->json('data.0'));
+        $cursor = $first->json('meta.next_cursor');
+        $this->assertIsString($cursor);
+        $this->assertNotSame('', $cursor);
+
+        $this->withToken($token)
+            ->getJson('/api/v1/users?filter[role]=user&page[size]=2&sort=name&page[cursor]='.rawurlencode($cursor))
+            ->assertOk()
+            ->assertJsonPath('meta.has_more', false)
+            ->assertJsonPath('data.0.name', 'Delta')
+            ->assertJsonPath('data.1.name', 'Gamma');
+    }
+PHP
+            : <<<'PHP'
+    public function test_admin_can_page_users_with_offset_totals_without_passwords(): void
+    {
+        $this->seedRegularUsers();
+        $token = $this->tokenFor('admin@example.com', 'admin');
+
+        $response = $this->withToken($token)
+            ->getJson('/api/v1/users?filter[role]=user&page[size]=2&page[number]=2&sort=name')
+            ->assertOk()
+            ->assertJsonPath('meta.strategy', 'offset')
+            ->assertJsonPath('meta.page_number', 2)
+            ->assertJsonPath('meta.total', 4)
+            ->assertJsonPath('meta.total_pages', 2)
+            ->assertJsonPath('data.0.name', 'Delta')
+            ->assertJsonPath('data.1.name', 'Gamma');
+
+        $this->assertArrayNotHasKey('password', $response->json('data.0'));
+    }
+PHP;
+
+        return <<<PHP
+<?php
+
+namespace Tests\Feature;
+
+use App\Infrastructure\Identity\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
+
+final class UsersListVerticalSliceTest extends TestCase
+{
+    use RefreshDatabase;
+
+$paginationTest
+
+    public function test_non_admin_user_is_forbidden(): void
+    {
+        \$token = \$this->tokenFor('viewer@example.com', 'user');
+
+        \$this->withToken(\$token)
+            ->getJson('/api/v1/users')
+            ->assertStatus(403)
+            ->assertHeader('content-type', 'application/problem+json')
+            ->assertJsonPath('title', 'Acceso denegado');
+    }
+
+    public function test_admin_can_filter_users_by_email_and_role(): void
+    {
+        \$this->seedRegularUsers();
+        \$token = \$this->tokenFor('admin@example.com', 'admin');
+
+        \$this->withToken(\$token)
+            ->getJson('/api/v1/users?filter[email]=beta&filter[role]=user')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.email', 'beta@example.com');
+    }
+
+    public function test_unknown_user_sort_field_is_rejected(): void
+    {
+        \$token = \$this->tokenFor('admin@example.com', 'admin');
+
+        \$this->withToken(\$token)
+            ->getJson('/api/v1/users?sort=password')
+            ->assertStatus(422)
+            ->assertHeader('content-type', 'application/problem+json')
+            ->assertJsonPath('title', 'Error de validación');
+    }
+
+    private function seedRegularUsers(): void
+    {
+        foreach ([
+            ['Gamma', 'gamma@example.com'],
+            ['Alpha', 'alpha@example.com'],
+            ['Delta', 'delta@example.com'],
+            ['Beta', 'beta@example.com'],
+        ] as [\$name, \$email]) {
+            User::query()->create([
+                'name' => \$name,
+                'email' => \$email,
+                'password' => Hash::make('secret-password'),
+                'role' => 'user',
+            ]);
+        }
+    }
+
+    private function tokenFor(string \$email, string \$role): string
+    {
+        User::query()->create([
+            'name' => \$role === 'admin' ? 'Administrador' : 'Usuario',
+            'email' => \$email,
+            'password' => Hash::make('secret-password'),
+            'role' => \$role,
+        ]);
+
+        \$response = \$this->postJson('/api/v1/auth/login', [
+            'email' => \$email,
+            'password' => 'secret-password',
+            'device_name' => 'users-list-test',
+        ])->assertOk();
+
+        \$token = \$response->json('data.access_token');
+        \$this->assertIsString(\$token);
+
+        return \$token;
     }
 }
 PHP;
