@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.5.4",
+  "evidence": [
+    {
+      "id": "EVD-BPADOPT002-REQUIREMENTS-CATALOG",
+      "type": "file",
+      "value": "config/blueprint_requirements.php",
+      "description": "Catálogo canónico de actores, requisitos, reglas, casos de uso, criterios de aceptación y políticas contractuales.",
+      "scope": {"level": "phase", "id": "requirements_domain"},
+      "created_at": "2026-09-23T12:37:00-03:00",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-BPADOPT002-FEATURE-TRACEABILITY",
+      "type": "file",
+      "value": "config/blueprint.php",
+      "description": "Master Feature Library 0.2 con enlaces requisito-use-case-criterio-permiso-idempotencia-auditoría-test y proyección traceability derivada.",
+      "scope": {"level": "phase", "id": "api_contract_design"},
+      "created_at": "2026-09-23T12:37:00-03:00",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-BPADOPT002-OPENAPI-TRACEABILITY",
+      "type": "file",
+      "value": "app/Application/Blueprint/Queries/GetTraceableMasterOpenApi.php",
+      "description": "Proyección de trazabilidad contractual a operaciones OpenAPI mediante extensiones x-apiblueprint-*.",
+      "scope": {"level": "phase", "id": "api_contract_design"},
+      "created_at": "2026-09-23T12:37:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT002-TRACEABILITY-QA",
+      "type": "test_report",
+      "value": "tests/Feature/BlueprintTraceabilityContractTest.php",
+      "description": "Guardarraíl ejecutable para referencias, cobertura, permission matrix, idempotency matrix, test evidence y OpenAPI traceability.",
+      "scope": {"level": "phase", "id": "api_contract_design"},
+      "created_at": "2026-09-23T12:37:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT002-DOCUMENTATION",
+      "type": "file",
+      "value": "docs/delivery/requirements-traceability.md",
+      "description": "Política de fuente de verdad, matrices contractuales, frontera de auditoría semántica y QA de BP-ADOPT-002.",
+      "scope": {"level": "phase", "id": "requirements_domain"},
+      "created_at": "2026-09-23T12:37:00-03:00",
+      "producer": "mixed"
+    }
+  ]
+}
