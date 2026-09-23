@@ -1,11 +1,11 @@
-name: U0.10 temporary exporter patch
+name: U0.10 temporary catalog patch
 
 on:
   push:
     branches:
       - feature/u0-10-users-show
     paths:
-      - scripts/u0-10-users-show.py
+      - scripts/u0-10-finish.py
       - .github/workflows/u0-10-users-show.yml
 
 permissions:
@@ -20,18 +20,30 @@ jobs:
         with:
           ref: feature/u0-10-users-show
           fetch-depth: 0
-      - name: Apply exporter patch
-        run: python3 scripts/u0-10-users-show.py
-      - name: Validate exporter syntax
-        run: php -l app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php
-      - name: Commit exporter patch
+      - name: Apply catalog, contract, tests and docs patch
+        run: python3 scripts/u0-10-finish.py
+      - name: Validate PHP syntax
         run: |
-          if git diff --quiet -- app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php; then
-            echo "No exporter changes to commit."
-            exit 0
-          fi
+          php -l app/Application/Blueprint/Queries/GetMasterOpenApi.php
+          php -l config/blueprint.php
+          php -l tests/Feature/GeneratedUsersListVerticalSliceExportTest.php
+          php -l tests/Feature/GeneratedUsersShowVerticalSliceExportTest.php
+          php -l tests/Feature/MasterCatalogTest.php
+      - name: Commit permanent U0.10 changes
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php
-          git commit -m "feat(u0.10): generate canonical users.show slice"
+          git add \
+            app/Application/Blueprint/Queries/GetMasterOpenApi.php \
+            config/blueprint.php \
+            docs/delivery/roadmap.md \
+            docs/product/master-feature-library.md \
+            tests/Feature/GeneratedUsersListVerticalSliceExportTest.php \
+            tests/Feature/GeneratedUsersShowVerticalSliceExportTest.php \
+            tests/Feature/MasterCatalogTest.php
+          if git diff --cached --quiet; then
+            echo "No permanent changes to commit."
+            exit 0
+          fi
+          git commit -m "feat(u0.10): register users.show in catalog and Swagger"
           git push origin HEAD:feature/u0-10-users-show
