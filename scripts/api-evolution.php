@@ -80,21 +80,16 @@ if ($diff['changed_operation_ids'] === []) {
     exit(0);
 }
 
-$impactPath = getenv('API_IMPACT_FILE');
-if (! is_string($impactPath) || $impactPath === '') {
-    fwrite(STDERR, "API contract drift detected without API_IMPACT_FILE.\n");
+$impactPath = resolveImpactPath($baseline, $current);
+if ($impactPath === null) {
+    fwrite(STDERR, "API contract drift detected without one matching canonical API impact report.\n");
     fwrite(STDERR, json_encode($diff, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR).PHP_EOL);
-    exit(1);
-}
-
-if (! is_file($impactPath)) {
-    fwrite(STDERR, "API impact report not found: {$impactPath}\n");
     exit(1);
 }
 
 $impact = json_decode((string) file_get_contents($impactPath), true, 512, JSON_THROW_ON_ERROR);
 if (! is_array($impact)) {
-    fwrite(STDERR, "API impact report is invalid JSON object.\n");
+    fwrite(STDERR, "API impact report is invalid JSON object: {$impactPath}\n");
     exit(1);
 }
 
@@ -285,6 +280,51 @@ function compareSnapshots(array $baseline, array $current): array
         'removed' => $removed,
         'modified' => $modified,
     ];
+}
+
+function resolveImpactPath(array $baseline, array $current): ?string
+{
+    $override = getenv('API_IMPACT_FILE');
+    if (is_string($override) && $override !== '') {
+        if (! is_file($override)) {
+            fwrite(STDERR, "API impact report not found: {$override}\n");
+            return null;
+        }
+
+        return $override;
+    }
+
+    $candidates = glob(__DIR__.'/../.blueprint/api-impacts/API-IMPACT-*.json') ?: [];
+    $matches = [];
+
+    foreach ($candidates as $candidate) {
+        try {
+            $impact = json_decode((string) file_get_contents($candidate), true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            continue;
+        }
+
+        if (! is_array($impact)) {
+            continue;
+        }
+
+        if (($impact['previous_revision'] ?? null) === ($baseline['contract_revision'] ?? null)
+            && ($impact['new_revision'] ?? null) === ($current['contract_revision'] ?? null)) {
+            $matches[] = $candidate;
+        }
+    }
+
+    if (count($matches) !== 1) {
+        if ($matches === []) {
+            fwrite(STDERR, "No versioned API impact report matches the detected revision transition.\n");
+        } else {
+            fwrite(STDERR, "Multiple API impact reports match the detected revision transition; exactly one is required.\n");
+        }
+
+        return null;
+    }
+
+    return $matches[0];
 }
 
 /** @return list<string> */
