@@ -299,6 +299,7 @@ final class AuditSemanticContractTest extends TestCase
         \$request->setUserResolver(static fn () => null);
         \$route = new Route([$method], ltrim($path, '/'), static fn () => null);
         \$route->name($routeName);
+        \$route->bind(\$request);
         \$request->setRouteResolver(static fn () => \$route);
 
         \$response = (new AuditRequestMiddleware(\$recordingAuditTrail))->handle(
