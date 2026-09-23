@@ -53,6 +53,17 @@ final readonly class GetMasterOpenApi
                 ];
             }
 
+            if ($feature['id'] === 'users.create') {
+                $operation['requestBody'] = [
+                    'required' => true,
+                    'content' => [
+                        'application/json' => [
+                            'schema' => ['$ref' => '#/components/schemas/CreateUserRequest'],
+                        ],
+                    ],
+                ];
+            }
+
             if ($feature['default_exposure'] !== 'public') {
                 $operation['security'] = [['bearerAuth' => []]];
             }
@@ -120,6 +131,16 @@ final readonly class GetMasterOpenApi
                                     'token_type' => ['type' => 'string', 'enum' => ['Bearer']],
                                 ],
                             ],
+                        ],
+                    ],
+                    'CreateUserRequest' => [
+                        'type' => 'object',
+                        'required' => ['name', 'email', 'password'],
+                        'properties' => [
+                            'name' => ['type' => 'string', 'maxLength' => 120],
+                            'email' => ['type' => 'string', 'format' => 'email', 'maxLength' => 255],
+                            'password' => ['type' => 'string', 'format' => 'password', 'minLength' => 8],
+                            'role' => ['type' => 'string', 'enum' => ['user', 'admin'], 'default' => 'user'],
                         ],
                     ],
                     'UserData' => [
@@ -270,6 +291,35 @@ final readonly class GetMasterOpenApi
                 ],
                 '422' => [
                     'description' => 'Parámetros de consulta inválidos.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+            ];
+        }
+
+        if ($feature['id'] === 'users.create') {
+            return [
+                '201' => [
+                    'description' => 'Usuario creado correctamente.',
+                    'content' => [
+                        'application/json' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'required' => ['data'],
+                                'properties' => ['data' => ['$ref' => '#/components/schemas/UserData']],
+                            ],
+                        ],
+                    ],
+                ],
+                '401' => [
+                    'description' => 'Autenticación requerida.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+                '403' => [
+                    'description' => 'Se requieren privilegios de administrador.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+                '422' => [
+                    'description' => 'Datos de usuario inválidos.',
                     'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
                 ],
             ];
