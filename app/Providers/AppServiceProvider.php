@@ -7,6 +7,7 @@ use App\Application\Blueprint\Contracts\BlueprintExporter;
 use App\Infrastructure\Blueprint\ArchitectureConformanceBlueprintExporter;
 use App\Infrastructure\Blueprint\ConfigBlueprintCatalog;
 use App\Infrastructure\Blueprint\LaravelZipBlueprintExporter;
+use App\Infrastructure\Blueprint\OperationalContractBlueprintExporter;
 use Illuminate\Support\ServiceProvider;
 
 final class AppServiceProvider extends ServiceProvider
@@ -16,8 +17,11 @@ final class AppServiceProvider extends ServiceProvider
         $this->app->bind(BlueprintCatalog::class, ConfigBlueprintCatalog::class);
         $this->app->bind(
             BlueprintExporter::class,
-            fn ($app) => new ArchitectureConformanceBlueprintExporter(
-                $app->make(LaravelZipBlueprintExporter::class),
+            fn ($app) => new OperationalContractBlueprintExporter(
+                new ArchitectureConformanceBlueprintExporter(
+                    $app->make(LaravelZipBlueprintExporter::class),
+                ),
+                $app->make(BlueprintCatalog::class),
             ),
         );
     }

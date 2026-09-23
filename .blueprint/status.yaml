@@ -1,5 +1,5 @@
 blueprint_version: 0.5.4
-updated_at: '2026-09-23T18:04:00-03:00'
+updated_at: '2026-09-23T18:44:00-03:00'
 phases:
   brownfield_inspection:
     status: COMPLETE
@@ -32,14 +32,14 @@ phases:
     status: PASS
     progress: 100
   postman_contract:
-    status: NOT_STARTED
-    progress: 0
+    status: COMPLETE
+    progress: 100
   api_qa:
     status: IN_PROGRESS
-    progress: 80
+    progress: 90
   api_gate:
     status: BLOCKED
-    progress: 78
+    progress: 82
   interface_inventory:
     status: NOT_STARTED
     progress: 0
@@ -141,11 +141,12 @@ checks:
   audit.event_catalog:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG, EVD-BPADOPT002-FEATURE-TRACEABILITY]
-    note: Semantic event IDs are specified and mapped; runtime semantic emission and audit QA remain separate work.
+    evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG, EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT004-AUDIT-EXPORT-QA, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
+    note: Canonical event IDs are mapped into generated routes and all seven semantic event codes were observed during BP-ADOPT-004 runtime acceptance.
   audit.retention_policy:
     status: PENDING
     verification: evidence
+    note: BP-ADOPT-004 proves append-oriented semantic audit output but does not define organizational retention, archival or deletion duration.
   api.auth_strategy:
     status: PASS
     verification: evidence
@@ -177,7 +178,7 @@ checks:
   api.audit_event_mapping:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
+    evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA, EVD-BPADOPT004-AUDIT-EXPORT-QA]
   api.idempotency_matrix:
     status: PASS
     verification: evidence
@@ -198,12 +199,12 @@ checks:
   api.auth_authorization:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA, EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
   api.audit_logging:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA]
-    note: Request-level audit implementation exists; semantic event QA remains pending.
+    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA, EVD-BPADOPT004-AUDIT-EXPORT-QA, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
+    note: Generated audit-enabled APIs emit canonical semantic event codes to append-oriented JSONL with recursive secret redaction; retention remains a separate pending policy.
   api.backend_tests:
     status: PASS
     verification: evidence
@@ -222,34 +223,38 @@ checks:
     verification: evidence
     evidence_ids: [EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-CI-POSTMERGE-095, EVD-BPADOPT002-TRACEABILITY-QA]
   api.postman_collection:
-    status: PENDING
+    status: PASS
     verification: file
+    evidence_ids: [EVD-BPADOPT004-POSTMAN-COLLECTION]
   api.postman_environment:
-    status: PENDING
+    status: PASS
     verification: file
+    evidence_ids: [EVD-BPADOPT004-POSTMAN-ENVIRONMENT]
   api.postman_coverage:
-    status: PENDING
+    status: PASS
     verification: evidence
+    evidence_ids: [EVD-BPADOPT004-POSTMAN-COVERAGE, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
   api.qa_positive:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA, EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
   api.qa_negative:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA]
+    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
   api.contract_validation:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-BPADOPT002-TRACEABILITY-QA]
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-BPADOPT002-TRACEABILITY-QA, EVD-BPADOPT004-POSTMAN-COVERAGE, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
   api.security_qa:
     status: PENDING
     verification: evidence
-    note: Existing auth/RBAC negative tests are strong but not yet represented as a complete Blueprint security-QA evidence set.
+    note: Auth, RBAC, validation and idempotency negatives execute in Newman, but a complete Blueprint security-QA evidence set remains pending.
   api.audit_qa:
-    status: PENDING
+    status: PASS
     verification: evidence
-    note: Request-level audit infrastructure exists; operation-specific semantic event behavior and retention expectations remain open.
+    evidence_ids: [EVD-BPADOPT004-AUDIT-EXPORT-QA, EVD-BPADOPT004-RUNTIME-SCRIPT, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
+    note: Semantic event mapping, runtime emission, required audit fields, correlation and secret exclusion passed; retention is tracked separately by audit.retention_policy.
   ui.web_inventory:
     status: PENDING
     verification: evidence
@@ -288,13 +293,13 @@ gates:
     evaluated_at: null
   architecture_ready:
     status: BLOCKED
-    evaluated_at: '2026-09-23T12:50:00-03:00'
+    evaluated_at: '2026-09-23T18:44:00-03:00'
     note: Domain/ADR/security evidence, audit retention and explicit API versioning policy remain incomplete.
   api_contract_ready:
     status: BLOCKED
-    evaluated_at: '2026-09-23T12:50:00-03:00'
+    evaluated_at: '2026-09-23T18:44:00-03:00'
     evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-OPENAPI-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
-    note: Required contract checks are complete, but Blueprint sequencing does not allow this gate to pass while architecture_ready remains blocked.
+    note: Required contract checks, including executable Postman coverage, are complete, but Blueprint sequencing does not allow this gate to pass while architecture_ready remains blocked.
   api_implemented:
     status: PASS
     evaluated_at: '2026-09-23T11:39:00-03:00'
@@ -304,17 +309,18 @@ gates:
     evaluated_at: '2026-09-23T12:50:00-03:00'
     evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-BPADOPT002-OPENAPI-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
   postman_ready:
-    status: BLOCKED
-    evaluated_at: '2026-09-23T11:39:00-03:00'
-    note: No canonical Postman collection, environment or coverage evidence exists in the reviewed baseline.
+    status: PASS
+    evaluated_at: '2026-09-23T18:44:00-03:00'
+    evidence_ids: [EVD-BPADOPT004-POSTMAN-COLLECTION, EVD-BPADOPT004-POSTMAN-ENVIRONMENT, EVD-BPADOPT004-POSTMAN-COVERAGE, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
   api_qa_pass:
     status: BLOCKED
-    evaluated_at: '2026-09-23T12:50:00-03:00'
-    note: Positive/negative and contract QA are strong; complete security QA and semantic audit QA remain open.
+    evaluated_at: '2026-09-23T18:44:00-03:00'
+    evidence_ids: [EVD-BPADOPT004-RUNTIME-ACCEPTANCE, EVD-BPADOPT004-AUDIT-EXPORT-QA]
+    note: Positive, negative, contract, Postman and semantic audit QA pass; a complete Blueprint security-QA evidence set remains open.
   api_gate:
     status: BLOCKED
-    evaluated_at: '2026-09-23T12:50:00-03:00'
-    note: Architecture evidence, Postman, complete security QA and semantic audit QA remain open prerequisites.
+    evaluated_at: '2026-09-23T18:44:00-03:00'
+    note: Postman and semantic audit QA are closed; architecture/security evidence, audit retention, explicit API versioning policy and complete security QA remain open prerequisites.
   interface_inventory_ready:
     status: PENDING
     evaluated_at: null
@@ -389,3 +395,24 @@ artifacts:
   - id: EVD-BPADOPT003-DOCUMENTATION
     type: file
     value: docs/delivery/generated-architecture-conformance.md
+  - id: EVD-BPADOPT004-POSTMAN-COLLECTION
+    type: file
+    value: postman/ApiBlueprint.generated.postman_collection.json
+  - id: EVD-BPADOPT004-POSTMAN-ENVIRONMENT
+    type: file
+    value: postman/ApiBlueprint.local.postman_environment.json
+  - id: EVD-BPADOPT004-POSTMAN-COVERAGE
+    type: test_report
+    value: tests/Feature/PostmanOperationalContractTest.php
+  - id: EVD-BPADOPT004-AUDIT-EXPORT-QA
+    type: test_report
+    value: tests/Feature/GeneratedSemanticAuditExportTest.php
+  - id: EVD-BPADOPT004-RUNTIME-SCRIPT
+    type: test_report
+    value: scripts/run-postman-operational-contract.sh
+  - id: EVD-BPADOPT004-RUNTIME-ACCEPTANCE
+    type: ci_run
+    value: https://github.com/LuisHdezE/ApiBlueprint/actions/runs/35924101353
+  - id: EVD-BPADOPT004-DOCUMENTATION
+    type: file
+    value: docs/delivery/operational-contract-audit-qa.md

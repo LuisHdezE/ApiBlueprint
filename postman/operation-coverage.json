@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "openapi_source": "master",
+  "operations": [
+    {"feature_id": "auth.login", "operation_id": "auth_login", "request_name": "auth_login", "method": "POST", "path": "/api/v1/auth/login", "audit_event": "audit.auth.login"},
+    {"feature_id": "auth.logout", "operation_id": "auth_logout", "request_name": "auth_logout", "method": "POST", "path": "/api/v1/auth/logout", "audit_event": "audit.auth.logout"},
+    {"feature_id": "users.list", "operation_id": "users_list", "request_name": "users_list", "method": "GET", "path": "/api/v1/users", "audit_event": "audit.users.list"},
+    {"feature_id": "users.show", "operation_id": "users_show", "request_name": "users_show", "method": "GET", "path": "/api/v1/users/{id}", "audit_event": "audit.users.show"},
+    {"feature_id": "users.create", "operation_id": "users_create", "request_name": "users_create", "method": "POST", "path": "/api/v1/users", "audit_event": "audit.users.create"},
+    {"feature_id": "products.list", "operation_id": "products_list", "request_name": "products_list", "method": "GET", "path": "/api/v1/products", "audit_event": "audit.products.list"},
+    {"feature_id": "products.show", "operation_id": "products_show", "request_name": "products_show", "method": "GET", "path": "/api/v1/products/{id}", "audit_event": "audit.products.show"}
+  ]
+}

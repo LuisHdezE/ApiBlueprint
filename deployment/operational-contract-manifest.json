@@ -1,0 +1,36 @@
+{
+  "schema_version": "0.3",
+  "generator": "ApiBlueprint",
+  "project": {
+    "name": "ApiBlueprint Operational Contract",
+    "api_version": "v1"
+  },
+  "template": "custom",
+  "governance": {
+    "authentication": "sanctum",
+    "rbac": true,
+    "correlation_id": true,
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 1000
+    },
+    "pagination": {
+      "strategy": "cursor",
+      "default_size": 25,
+      "max_size": 100
+    },
+    "filtering": true,
+    "sorting": true,
+    "idempotency": true,
+    "audit": true
+  },
+  "endpoints": [
+    {"id": "auth.login", "exposure": "public"},
+    {"id": "auth.logout", "exposure": "authenticated"},
+    {"id": "users.list", "exposure": "admin"},
+    {"id": "users.show", "exposure": "admin"},
+    {"id": "users.create", "exposure": "admin"},
+    {"id": "products.list", "exposure": "public"},
+    {"id": "products.show", "exposure": "public"}
+  ]
+}

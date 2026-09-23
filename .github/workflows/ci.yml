@@ -25,6 +25,11 @@ jobs:
           coverage: none
           tools: composer:v2
 
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
       - name: Validate reproducible Composer metadata
         shell: bash
         run: |
@@ -54,3 +59,17 @@ jobs:
 
       - name: Generated solution acceptance
         run: bash scripts/accept-generated-solutions.sh
+
+      - name: Operational Postman contract
+        run: bash scripts/run-postman-operational-contract.sh
+
+      - name: Upload operational contract evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bp-adopt-004-operational-contract
+          path: |
+            storage/app/qa/newman-report.json
+            storage/app/qa/audit-runtime-report.json
+          if-no-files-found: warn
+          retention-days: 14
