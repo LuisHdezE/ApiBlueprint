@@ -1,0 +1,353 @@
+blueprint_version: 0.5.4
+updated_at: '2026-09-23T11:39:00-03:00'
+phases:
+  brownfield_inspection:
+    status: COMPLETE
+    progress: 100
+  as_is:
+    status: COMPLETE
+    progress: 100
+  gap_analysis:
+    status: COMPLETE
+    progress: 100
+  target_definition:
+    status: COMPLETE
+    progress: 100
+  requirements_domain:
+    status: IN_PROGRESS
+    progress: 55
+  interface_scope_baseline:
+    status: NOT_STARTED
+    progress: 0
+  architecture_security_data:
+    status: IN_PROGRESS
+    progress: 70
+  api_contract_design:
+    status: IN_PROGRESS
+    progress: 70
+  api_implementation:
+    status: COMPLETE
+    progress: 100
+  openapi_validation:
+    status: PASS
+    progress: 100
+  postman_contract:
+    status: NOT_STARTED
+    progress: 0
+  api_qa:
+    status: IN_PROGRESS
+    progress: 80
+  api_gate:
+    status: BLOCKED
+    progress: 70
+  interface_inventory:
+    status: NOT_STARTED
+    progress: 0
+  design_system:
+    status: NOT_STARTED
+    progress: 0
+  client_architecture:
+    status: NOT_STARTED
+    progress: 0
+  functional_interface_slice:
+    status: NOT_STARTED
+    progress: 0
+  visual_functional_review:
+    status: NOT_STARTED
+    progress: 0
+  integration_qa:
+    status: NOT_STARTED
+    progress: 0
+  release_gate:
+    status: NOT_STARTED
+    progress: 0
+  operations:
+    status: IN_PROGRESS
+    progress: 60
+checks:
+  brownfield.technical_inventory:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BPAUDIT-TARGET]
+  brownfield.functional_reconstruction:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BPAUDIT-TARGET]
+  brownfield.gap_analysis:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BPAUDIT-COMPLIANCE-REVIEW]
+  brownfield.target_definition:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BPAUDIT-TARGET]
+  brownfield.alignment_roadmap:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BPAUDIT-TARGET]
+  requirements.actors_authorization:
+    status: PENDING
+    verification: evidence
+    note: Existing exposure and RBAC intent is strong but not yet linked to stable requirement/use-case IDs.
+  requirements.functional:
+    status: PENDING
+    verification: evidence
+    note: Functional intent exists across catalog and delivery docs but is not yet formalized as a traceable requirements baseline.
+  requirements.non_functional:
+    status: PENDING
+    verification: evidence
+  requirements.business_rules:
+    status: PENDING
+    verification: evidence
+    note: Business rules exist materially in the manifest resolver and feature contracts but lack a formal requirement traceability layer.
+  requirements.use_cases:
+    status: PENDING
+    verification: evidence
+  requirements.acceptance_criteria:
+    status: PENDING
+    verification: evidence
+  requirements.traceability:
+    status: PENDING
+    verification: evidence
+  architecture.domain_model:
+    status: PENDING
+    verification: evidence
+    note: Root Domain is intentionally thin; target modeling should emerge only for stable business concepts.
+  architecture.decision_records:
+    status: PENDING
+    verification: evidence
+  architecture.security_model:
+    status: PENDING
+    verification: evidence
+  architecture.threat_model:
+    status: PENDING
+    verification: evidence
+    note: Applicability decision is still pending for the current adoption baseline.
+  data.architecture:
+    status: N/A
+    verification: evidence
+    note: ApiBlueprint itself has no authoritative business database in the reviewed root product boundary.
+  data.schema_migrations:
+    status: N/A
+    verification: evidence
+    note: Root product boundary has no authoritative database schema; generated solutions are tested separately.
+  data.authoritative_database:
+    status: N/A
+    verification: evidence
+  audit.event_catalog:
+    status: PENDING
+    verification: evidence
+  audit.retention_policy:
+    status: PENDING
+    verification: evidence
+  api.auth_strategy:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-BLUEPRINT-EXPORT-QA]
+  api.error_contract:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-GOVERNED-RUNTIME-QA]
+  api.versioning_policy:
+    status: PENDING
+    verification: evidence
+    note: Current routes use /api/v1, but an explicit versioning and compatibility policy has not yet been materialized.
+  api.scope_defined:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT]
+  api.endpoint_inventory:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT]
+  api.auth_contract:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA]
+  api.permission_matrix:
+    status: PENDING
+    verification: evidence
+  api.audit_event_mapping:
+    status: PENDING
+    verification: evidence
+  api.idempotency_matrix:
+    status: PENDING
+    verification: evidence
+  api.contract_traceability:
+    status: PENDING
+    verification: evidence
+  api.change_impact_analysis:
+    status: PENDING
+    verification: evidence
+    note: Stable operationIds exist, but post-baseline API impact artifacts are not yet materialized.
+  api.endpoints_implemented:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-CI-POSTMERGE-095, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+    note: PASS applies to features marked implemented/exportable in the canonical Master Feature Library, not to planned catalog entries.
+  api.auth_authorization:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+  api.audit_logging:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA]
+    note: Implementation exists; semantic audit-event mapping and audit QA remain pending separate checks.
+  api.backend_tests:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-CI-POSTMERGE-095, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+  api.architecture_implementation_conformance:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-ARCH-CONFORMANCE-ROOT]
+    note: Root conformance passes; exported-project guardrails are tracked as an adoption improvement.
+  api.openapi:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT]
+  api.openapi_validation:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-CI-POSTMERGE-095]
+  api.postman_collection:
+    status: PENDING
+    verification: file
+  api.postman_environment:
+    status: PENDING
+    verification: file
+  api.postman_coverage:
+    status: PENDING
+    verification: evidence
+  api.qa_positive:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+  api.qa_negative:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BLUEPRINT-EXPORT-QA]
+  api.contract_validation:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+  api.security_qa:
+    status: PENDING
+    verification: evidence
+    note: Existing auth/RBAC negative tests are strong but not yet represented as a complete Blueprint security-QA evidence set.
+  api.audit_qa:
+    status: PENDING
+    verification: evidence
+    note: Infrastructure presence is tested; event semantics and retention behavior are not yet closed.
+  ui.web_inventory:
+    status: PENDING
+    verification: evidence
+  ui.inventory_scope_complete:
+    status: PENDING
+    verification: evidence
+  design.system:
+    status: PENDING
+    verification: evidence
+  design.tokens:
+    status: PENDING
+    verification: file
+  client.architecture_contract:
+    status: PENDING
+    verification: file
+  functional.traceability:
+    status: PENDING
+    verification: evidence
+  release.documentation:
+    status: PENDING
+    verification: evidence
+  operations.observability:
+    status: PENDING
+    verification: evidence
+gates:
+  brownfield_baseline:
+    status: PASS
+    evaluated_at: '2026-09-23T11:39:00-03:00'
+    evidence_ids: [EVD-BPAUDIT-COMPLIANCE-REVIEW, EVD-BPAUDIT-TARGET]
+  requirements_ready:
+    status: BLOCKED
+    evaluated_at: '2026-09-23T11:39:00-03:00'
+    note: Traceable requirements, use cases and acceptance criteria are not yet materialized.
+  interface_scope_ready:
+    status: PENDING
+    evaluated_at: null
+  architecture_ready:
+    status: BLOCKED
+    evaluated_at: '2026-09-23T11:39:00-03:00'
+    note: Architecture implementation is strong, but formal domain/ADR/security/audit evidence is incomplete.
+  api_contract_ready:
+    status: BLOCKED
+    evaluated_at: '2026-09-23T11:39:00-03:00'
+    note: Permission, audit-event, idempotency and requirement traceability matrices remain open.
+  api_implemented:
+    status: PASS
+    evaluated_at: '2026-09-23T11:39:00-03:00'
+    evidence_ids: [EVD-CI-POSTMERGE-095, EVD-ARCH-CONFORMANCE-ROOT, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+  openapi_valid:
+    status: PASS
+    evaluated_at: '2026-09-23T11:39:00-03:00'
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE]
+  postman_ready:
+    status: BLOCKED
+    evaluated_at: '2026-09-23T11:39:00-03:00'
+    note: No canonical Postman collection, environment or coverage evidence exists in the reviewed baseline.
+  api_qa_pass:
+    status: BLOCKED
+    evaluated_at: '2026-09-23T11:39:00-03:00'
+    note: Positive/negative and contract QA are strong; complete security and semantic audit QA remain open.
+  api_gate:
+    status: BLOCKED
+    evaluated_at: '2026-09-23T11:39:00-03:00'
+    note: Requirements, architecture evidence, API contract matrices, Postman and audit/security QA prerequisites remain open.
+  interface_inventory_ready:
+    status: PENDING
+    evaluated_at: null
+  design_system_ready:
+    status: PENDING
+    evaluated_at: null
+  release_gate:
+    status: PENDING
+    evaluated_at: null
+functional_slices: []
+scoped_gates: []
+blockers: []
+api_impacts: []
+artifacts:
+  - id: EVD-BPAUDIT-CONSUMER-BASELINE
+    type: commit
+    value: https://github.com/LuisHdezE/ApiBlueprint/commit/21e3a29ab8de6b15c50c9b0c6e20c0f506a00820
+  - id: EVD-BPAUDIT-BLUEPRINT-BASELINE
+    type: commit
+    value: https://github.com/LuisHdezE/SoftwareDevelopmentBlueprint/commit/8d29ba4c6caf0a382b80310dc0e88c8f1e7fb3c4
+  - id: EVD-CI-POSTMERGE-095
+    type: ci_run
+    value: https://github.com/LuisHdezE/ApiBlueprint/actions/runs/35861639197
+  - id: EVD-ARCH-CONFORMANCE-ROOT
+    type: test_report
+    value: tests/Unit/ArchitectureBoundaryTest.php
+  - id: EVD-MASTER-CATALOG-CONTRACT
+    type: test_report
+    value: tests/Feature/MasterCatalogTest.php
+  - id: EVD-BLUEPRINT-EXPORT-QA
+    type: test_report
+    value: tests/Feature/BlueprintExportTest.php
+  - id: EVD-GOVERNED-RUNTIME-QA
+    type: test_report
+    value: tests/Feature/GovernedRuntimeTest.php
+  - id: EVD-GENERATED-SOLUTION-ACCEPTANCE
+    type: test_report
+    value: scripts/accept-generated-solutions.sh
+  - id: EVD-USERS-CREATE-CONTRACT
+    type: file
+    value: docs/delivery/users-create.md
+  - id: EVD-BPAUDIT-TARGET
+    type: file
+    value: .blueprint/target-definition.md
+  - id: EVD-BPAUDIT-COMPLIANCE-REVIEW
+    type: file
+    value: .blueprint/compliance-review.json

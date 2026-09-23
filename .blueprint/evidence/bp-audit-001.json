@@ -1,0 +1,113 @@
+{
+  "schema_version": "0.5.4",
+  "evidence": [
+    {
+      "id": "EVD-BPAUDIT-CONSUMER-BASELINE",
+      "type": "commit",
+      "value": "https://github.com/LuisHdezE/ApiBlueprint/commit/21e3a29ab8de6b15c50c9b0c6e20c0f506a00820",
+      "description": "Exact ApiBlueprint consumer baseline reviewed by BP-AUDIT-001.",
+      "scope": {"level": "project", "id": "ApiBlueprint"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "mixed",
+      "source_commit": "21e3a29ab8de6b15c50c9b0c6e20c0f506a00820"
+    },
+    {
+      "id": "EVD-BPAUDIT-BLUEPRINT-BASELINE",
+      "type": "commit",
+      "value": "https://github.com/LuisHdezE/SoftwareDevelopmentBlueprint/commit/8d29ba4c6caf0a382b80310dc0e88c8f1e7fb3c4",
+      "description": "Exact SoftwareDevelopmentBlueprint 0.5.4 baseline used by the compliance review.",
+      "scope": {"level": "project", "id": "SoftwareDevelopmentBlueprint-0.5.4"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "mixed",
+      "source_commit": "8d29ba4c6caf0a382b80310dc0e88c8f1e7fb3c4"
+    },
+    {
+      "id": "EVD-CI-POSTMERGE-095",
+      "type": "ci_run",
+      "value": "https://github.com/LuisHdezE/ApiBlueprint/actions/runs/35861639197",
+      "description": "Post-merge CI run #95 succeeded for the exact reviewed consumer baseline.",
+      "scope": {"level": "project", "id": "ApiBlueprint"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "automatic",
+      "source_commit": "21e3a29ab8de6b15c50c9b0c6e20c0f506a00820"
+    },
+    {
+      "id": "EVD-ARCH-CONFORMANCE-ROOT",
+      "type": "test_report",
+      "value": "tests/Unit/ArchitectureBoundaryTest.php",
+      "description": "Executable root architecture assertion preventing Laravel dependencies in Domain and Application.",
+      "scope": {"level": "phase", "id": "api_implementation"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "automatic",
+      "source_commit": "21e3a29ab8de6b15c50c9b0c6e20c0f506a00820"
+    },
+    {
+      "id": "EVD-MASTER-CATALOG-CONTRACT",
+      "type": "test_report",
+      "value": "tests/Feature/MasterCatalogTest.php",
+      "description": "Executable feature-ID, route-signature, application reuse and master OpenAPI contract assertions.",
+      "scope": {"level": "phase", "id": "api_contract_design"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "automatic",
+      "source_commit": "21e3a29ab8de6b15c50c9b0c6e20c0f506a00820"
+    },
+    {
+      "id": "EVD-BLUEPRINT-EXPORT-QA",
+      "type": "test_report",
+      "value": "tests/Feature/BlueprintExportTest.php",
+      "description": "Positive and negative resolver/export QA covering canonicalization, dependency reconciliation, RBAC, Problem Details and generated governance.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "automatic",
+      "source_commit": "21e3a29ab8de6b15c50c9b0c6e20c0f506a00820"
+    },
+    {
+      "id": "EVD-GOVERNED-RUNTIME-QA",
+      "type": "test_report",
+      "value": "tests/Feature/GovernedRuntimeTest.php",
+      "description": "Runtime QA for correlation IDs and RFC 9457 Problem Details behavior.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "automatic",
+      "source_commit": "21e3a29ab8de6b15c50c9b0c6e20c0f506a00820"
+    },
+    {
+      "id": "EVD-GENERATED-SOLUTION-ACCEPTANCE",
+      "type": "test_report",
+      "value": "scripts/accept-generated-solutions.sh",
+      "description": "Executable generated-solution acceptance covering export, OpenAPI reconciliation, dependency install, formatting, tests and route smoke.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "automatic",
+      "source_commit": "21e3a29ab8de6b15c50c9b0c6e20c0f506a00820"
+    },
+    {
+      "id": "EVD-USERS-CREATE-CONTRACT",
+      "type": "file",
+      "value": "docs/delivery/users-create.md",
+      "description": "Representative canonical feature contract for users.create.",
+      "scope": {"level": "phase", "id": "api_contract_design"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "mixed",
+      "source_commit": "21e3a29ab8de6b15c50c9b0c6e20c0f506a00820"
+    },
+    {
+      "id": "EVD-BPAUDIT-TARGET",
+      "type": "file",
+      "value": ".blueprint/target-definition.md",
+      "description": "Brownfield AS-IS, TO-BE, non-goals and incremental adoption backlog.",
+      "scope": {"level": "phase", "id": "target_definition"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-BPAUDIT-COMPLIANCE-REVIEW",
+      "type": "file",
+      "value": ".blueprint/compliance-review.json",
+      "description": "SoftwareDevelopmentBlueprint 0.5.4 brownfield compliance review for ApiBlueprint.",
+      "scope": {"level": "project", "id": "BP-AUDIT-001"},
+      "created_at": "2026-09-23T11:39:00-03:00",
+      "producer": "mixed"
+    }
+  ]
+}
