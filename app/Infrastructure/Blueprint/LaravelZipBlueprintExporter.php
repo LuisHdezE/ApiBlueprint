@@ -275,6 +275,7 @@ PHP;
             'use Symfony\\Component\\HttpKernel\\Exception\\HttpExceptionInterface;',
         ];
         $middlewareLines = [];
+        $middlewareAliases = [];
 
         if ($manifest['governance']['correlation_id']) {
             $imports[] = 'use App\\Presentation\\Http\\Middleware\\CorrelationIdMiddleware;';
@@ -282,11 +283,18 @@ PHP;
         }
         if ($manifest['governance']['idempotency']) {
             $imports[] = 'use App\\Presentation\\Http\\Middleware\\IdempotencyMiddleware;';
-            $middlewareLines[] = "        \$middleware->alias(['idempotency' => IdempotencyMiddleware::class]);";
+            $middlewareAliases['idempotency'] = 'IdempotencyMiddleware::class';
         }
         if ($manifest['governance']['audit']) {
             $imports[] = 'use App\\Presentation\\Http\\Middleware\\AuditRequestMiddleware;';
-            $middlewareLines[] = "        \$middleware->alias(['audit.request' => AuditRequestMiddleware::class]);";
+            $middlewareAliases['audit.request'] = 'AuditRequestMiddleware::class';
+        }
+        if ($middlewareAliases !== []) {
+            $aliases = [];
+            foreach ($middlewareAliases as $alias => $class) {
+                $aliases[] = "'{$alias}' => {$class}";
+            }
+            $middlewareLines[] = '        $middleware->alias(['.implode(', ', $aliases).']);';
         }
 
         sort($imports);
