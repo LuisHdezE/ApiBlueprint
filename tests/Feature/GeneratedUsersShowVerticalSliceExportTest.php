@@ -38,7 +38,7 @@ final class GeneratedUsersShowVerticalSliceExportTest extends TestCase
 
         $this->assertIsString($data);
         $this->assertStringContainsString('final readonly class UserData', $data);
-        $this->assertStringContainsString("'role' => $this->role", $data);
+        $this->assertStringContainsString("'role' => \$this->role", $data);
         $this->assertStringNotContainsString('password', $data);
 
         $this->assertIsString($contract);
