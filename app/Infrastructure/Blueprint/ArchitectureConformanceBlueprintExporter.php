@@ -59,7 +59,7 @@ final readonly class ArchitectureConformanceBlueprintExporter implements Bluepri
 
     private function architectureBoundaryTestFile(): string
     {
-        return <<<'PHP'
+        $test = <<<'PHP'
 <?php
 
 namespace Tests\Unit;
@@ -146,5 +146,7 @@ final class ArchitectureBoundaryTest extends TestCase
     }
 }
 PHP;
+
+        return $test.PHP_EOL;
     }
 }
