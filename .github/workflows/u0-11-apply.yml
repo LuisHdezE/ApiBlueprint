@@ -5,7 +5,7 @@ on:
     branches:
       - feature/u0-11-users-create
     paths:
-      - scripts/u0-11-apply.py
+      - scripts/u0-11-apply-v2.py
       - .github/workflows/u0-11-apply.yml
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
         with:
           php-version: '8.4'
       - name: Apply U0.11 patch
-        run: python3 scripts/u0-11-apply.py
+        run: python3 scripts/u0-11-apply-v2.py
       - name: Validate PHP syntax
         run: |
           php -l app/Infrastructure/Blueprint/LaravelZipBlueprintExporter.php
