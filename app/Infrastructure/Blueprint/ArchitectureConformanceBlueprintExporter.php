@@ -129,7 +129,7 @@ final class ArchitectureBoundaryTest extends TestCase
     /** @return list<SplFileInfo> */
     private function phpFiles(string $directory): array
     {
-        if (! is_dir($directory)) {
+        if (is_dir($directory) === false) {
             return [];
         }
 
