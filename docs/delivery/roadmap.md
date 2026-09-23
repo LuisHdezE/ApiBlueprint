@@ -195,7 +195,7 @@ Integrado por PR #10 con CI pre-merge y post-merge verdes. U0.8 queda cerrado co
 
 Integrado por PR #11 con CI pre-merge #76 y post-merge #77 verdes.
 
-## U0.10 - Users Library: `users.show` 🚧
+## U0.10 - Users Library: `users.show` ✅
 
 - reutiliza `User`, Sanctum y el gate `admin-api` existentes;
 - `UserData` pasa a ser la representación pública compartida de lectura de Usuarios;
@@ -206,6 +206,19 @@ Integrado por PR #11 con CI pre-merge #76 y post-merge #77 verdes.
 - Swagger maestro y OpenAPI generado actualizados en el mismo checkpoint;
 - export exclusivo de `users.show` no arrastra paginación, listados ni Products;
 - acceptance SaaS debe ejecutar list + show sobre la misma identidad y `UserData`.
+
+## U0.11 - Users Library: `users.create` 🚧
+
+- reutiliza `User`, `UserData`, Sanctum y el gate `admin-api`;
+- `CreateUserData`, `UserCreateRepository` y `CreateUser` mantienen Application independiente de Laravel;
+- `DatabaseUserCreateRepository` persiste la identidad existente y hashea password;
+- validación reusable de email único, password mínimo y rol compatible con RBAC;
+- `POST /api/v1/users` responde 201 y nunca expone password;
+- 401/403/422 gobernados, con validación RFC 9457 en español;
+- reutiliza la idempotencia existente para la operación POST;
+- Swagger maestro, OpenAPI generado y catálogo se actualizan juntos;
+- export exclusivo no arrastra list/show ni Products;
+- acceptance SaaS ejecuta list + show + create sobre una identidad compartida.
 
 ### Siguientes checkpoints previstos
 - hacer que el compositor distinga claramente features implementadas, en desarrollo y pendientes;
