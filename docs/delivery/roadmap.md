@@ -34,9 +34,9 @@ Implementación y documentación avanzan juntas. La documentación evidencia el 
 - base de idempotencia
 - capability de auditoría
 
-## U0.4 - Entrega continua y runtime público 🚧
+## U0.4 - Entrega continua y runtime público ✅
 
-La implementación de release ya está mergeada en `main` y el SHA aprobado fue promovido mediante `deploy/production`. El build y la transferencia FTP hacia Eliasworks concluyeron correctamente. El cierre permanece pendiente del smoke público, bloqueado temporalmente por la disponibilidad DNS del subdominio productivo.
+La implementación de release está mergeada en `main` y el SHA aprobado `b4b9953d5c44384177294b2d60d247e62f322ec9` fue promovido mediante `deploy/production`. El build y la transferencia FTP hacia Eliasworks concluyeron correctamente. El runtime público completó el smoke de aceptación el 2026-09-23 después de provisionar el `.env` persistente requerido por el contrato de producción.
 
 - `composer.lock` obligatorio para builds reproducibles;
 - CI rechaza releases sin lock;
@@ -46,11 +46,15 @@ La implementación de release ya está mergeada en `main` y el SHA aprobado fue 
 - publicación FTP gobernada hacia Eliasworks;
 - `.env` productivo preservado fuera del release;
 - `release.json` con evidencia del SHA desplegado;
-- smoke de landing, status, SHA y exportación ZIP;
+- landing pública HTTP 200 con ApiBlueprint;
+- `GET /api/v1/meta/status` HTTP 200 con `status=ok` y `blueprint_schema=0.3`;
+- `GET /release.json` HTTP 200 y SHA exacto del release promovido;
+- `POST /api/v1/blueprint/export` HTTP 200 y ZIP válido con firma `PK`;
 - rollback mediante la misma referencia de promoción;
-- documentación operacional en `docs/delivery/production-deployment.md`.
+- documentación operacional en `docs/delivery/production-deployment.md`;
+- evidencia de aceptación en `docs/delivery/production-runtime-acceptance.md` y `.blueprint/evidence/u0-4-production-runtime.json`.
 
-U0.4 se considera cerrado únicamente cuando el runtime público complete el smoke verde. La promoción y transferencia ya realizadas no sustituyen esa evidencia.
+U0.4 queda cerrado con **RUNTIME ACCEPTANCE PASS**. La ausencia inicial de `APP_KEY` fue una brecha de provisionamiento del entorno, no de código de aplicación; quedó documentada sin registrar secretos.
 
 ## U0.5 - Aceptación de soluciones generadas ✅
 
