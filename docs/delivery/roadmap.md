@@ -162,7 +162,7 @@ Objetivo: comenzar a ampliar la biblioteca sobre la fundación U0.7 con una capa
 - test raíz que verifica el contenido del ZIP sin infraestructura de Products;
 - acceptance SaaS y Commerce ejecutando exactamente la misma receta de login.
 
-### Checkpoint 2 - `auth.logout` 🚧
+### Checkpoint 2 - `auth.logout` ✅
 
 - una única feature `auth.logout` reutilizable por cualquier aplicación;
 - dependencia explícita de `auth.login`, sin identidad ni migraciones duplicadas;
@@ -173,6 +173,25 @@ Objetivo: comenzar a ampliar la biblioteca sobre la fundación U0.7 con una capa
 - login/logout excluidos de idempotency key;
 - Swagger, catálogo y tests actualizados en el mismo checkpoint;
 - acceptance ejecutando login → logout → token revocado.
+
+Integrado por PR #10 con CI pre-merge y post-merge verdes. U0.8 queda cerrado con un único ciclo canónico de autenticación reutilizable.
+
+## U0.9 - Users Library 🚧
+
+### Checkpoint 1 - `users.list` 🚧
+
+- reutiliza la identidad `User`, Sanctum y RBAC ya existentes;
+- endpoint canónico `GET /api/v1/users` con exposición `admin`;
+- puerto `UserListRepository` y caso de uso `ListUsers` en Application;
+- salida segura `UserListItem` sin password;
+- filtros `id`, `name`, `email` y `role`;
+- sorting determinista por `id`, `name`, `email` y `role`;
+- cursor keyset y offset reutilizando un único `DatabaseQueryPaginator` compartido con Products;
+- validación reusable mediante `ListQueryValidator`, sin validador duplicado por recurso;
+- 401/403/422 mediante contratos gobernados;
+- Swagger maestro y OpenAPI generado actualizados en el mismo checkpoint;
+- catálogo SaaS actualizado automáticamente desde la feature canónica;
+- acceptance generado prueba autorización admin, ausencia de password, paginación, filtros y sorting.
 
 ### Siguientes checkpoints previstos
 - hacer que el compositor distinga claramente features implementadas, en desarrollo y pendientes;

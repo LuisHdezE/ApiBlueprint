@@ -122,6 +122,29 @@ final readonly class GetMasterOpenApi
                             ],
                         ],
                     ],
+                    'UserListItem' => [
+                        'type' => 'object',
+                        'required' => ['id', 'name', 'email', 'role'],
+                        'properties' => [
+                            'id' => ['type' => 'string'],
+                            'name' => ['type' => 'string'],
+                            'email' => ['type' => 'string', 'format' => 'email'],
+                            'role' => ['type' => 'string'],
+                        ],
+                    ],
+                    'ListMeta' => [
+                        'type' => 'object',
+                        'required' => ['strategy', 'page_size', 'has_more'],
+                        'properties' => [
+                            'strategy' => ['type' => 'string', 'enum' => ['cursor', 'offset']],
+                            'page_size' => ['type' => 'integer'],
+                            'has_more' => ['type' => 'boolean'],
+                            'next_cursor' => ['type' => ['string', 'null']],
+                            'page_number' => ['type' => 'integer'],
+                            'total' => ['type' => 'integer'],
+                            'total_pages' => ['type' => 'integer'],
+                        ],
+                    ],
                     'ProblemDetails' => [
                         'type' => 'object',
                         'required' => ['type', 'title', 'status'],
@@ -170,8 +193,17 @@ final readonly class GetMasterOpenApi
             $parameters[] = ['name' => 'page[number]', 'in' => 'query', 'required' => false, 'schema' => ['type' => 'integer', 'minimum' => 1]];
 
             if ($catalog['governance']['defaults']['filtering']) {
-                $parameters[] = ['name' => 'filter[id]', 'in' => 'query', 'required' => false, 'schema' => ['type' => 'string']];
-                $parameters[] = ['name' => 'filter[name]', 'in' => 'query', 'required' => false, 'schema' => ['type' => 'string']];
+                $filterFields = $feature['id'] === 'users.list'
+                    ? ['id', 'name', 'email', 'role']
+                    : ['id', 'name'];
+                foreach ($filterFields as $filterField) {
+                    $parameters[] = [
+                        'name' => 'filter['.$filterField.']',
+                        'in' => 'query',
+                        'required' => false,
+                        'schema' => ['type' => 'string'],
+                    ];
+                }
             }
 
             if ($catalog['governance']['defaults']['sorting']) {
@@ -206,6 +238,38 @@ final readonly class GetMasterOpenApi
                 '204' => ['description' => 'Sesión cerrada correctamente.'],
                 '401' => [
                     'description' => 'Token de acceso ausente o inválido.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+            ];
+        }
+
+        if ($feature['id'] === 'users.list') {
+            return [
+                '200' => [
+                    'description' => 'Listado paginado de usuarios.',
+                    'content' => [
+                        'application/json' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'required' => ['data', 'meta'],
+                                'properties' => [
+                                    'data' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/UserListItem']],
+                                    'meta' => ['$ref' => '#/components/schemas/ListMeta'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                '401' => [
+                    'description' => 'Autenticación requerida.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+                '403' => [
+                    'description' => 'Se requieren privilegios de administrador.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+                '422' => [
+                    'description' => 'Parámetros de consulta inválidos.',
                     'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
                 ],
             ];

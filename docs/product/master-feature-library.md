@@ -58,11 +58,14 @@ Las primeras features ejecutables de la biblioteca son:
 - `products.list`;
 - `products.show`;
 - `auth.login`;
-- `auth.logout`.
+- `auth.logout`;
+- `users.list`.
 
 `auth.login` y `auth.logout` forman el ciclo mínimo canónico de autenticación. `auth.login` es una única feature compartida por SaaS, Commerce y cualquier aplicación futura que necesite autenticación. Exporta usuario e identidad mínimos reutilizables, un puerto de Application, adaptador Laravel Sanctum, validación HTTP, migraciones, contrato OpenAPI y tests reales de emisión de token. No se crea un login independiente por tipo de aplicación.
 
 Cuando una composición selecciona `auth.login`, la estrategia `authentication=none` se reconcilia a `sanctum` y el ajuste queda registrado en el manifest resuelto. `auth.logout` depende de `auth.login` y revoca únicamente el token Sanctum actual, reutilizando la misma identidad, tabla de usuarios y almacenamiento de tokens.
+
+`users.list` reutiliza esa misma identidad y el gate `admin-api`. La paginación cursor/offset y la validación estructural de listados son infraestructura compartida con `products.list`; una nueva feature de listado no debe copiar esos algoritmos.
 
 ## 4. Ingreso de nuevas aplicaciones mediante imagen + descripción
 
@@ -101,7 +104,7 @@ Permite seleccionar un tipo de aplicación y las features que formarán una nuev
 
 `/swagger` consume `GET /api/v1/blueprint/openapi` y muestra las features implementadas cuyo contrato OpenAPI está listo.
 
-Swagger no es documentación de cierre: se actualiza en el mismo cambio que termina una feature. `auth.login` publica su request body, respuesta con token Bearer y errores 401/422 desde el mismo checkpoint que lo vuelve ejecutable.
+Swagger no es documentación de cierre: se actualiza en el mismo cambio que termina una feature. `auth.login` publica su request body, respuesta con token Bearer y errores 401/422 desde el mismo checkpoint que lo vuelve ejecutable. `users.list` publica filtros, sorting, paginación, esquema seguro de usuario y errores 401/403/422 en el mismo cambio que lo incorpora a la biblioteca.
 
 ## 6. Compatibilidad con el motor actual
 
