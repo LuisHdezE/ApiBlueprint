@@ -133,18 +133,20 @@ final readonly class OperationalContractBlueprintExporter implements BlueprintEx
         }
         $mapping = $rows === [] ? '' : "\n".implode("\n", $rows)."\n    ";
 
-        return <<<PHP
+        $file = <<<PHP
 <?php
 
 return [
     'route_event_codes' => [$mapping],
 ];
-PHP.PHP_EOL;
+PHP;
+
+        return $file.PHP_EOL;
     }
 
     private function auditTrailFile(): string
     {
-        return <<<'PHP'
+        $file = <<<'PHP'
 <?php
 
 namespace App\Infrastructure\Audit;
@@ -202,11 +204,13 @@ final class LogAuditTrail implements AuditTrail
     }
 }
 PHP;
+
+        return $file.PHP_EOL;
     }
 
     private function auditMiddlewareFile(): string
     {
-        return <<<'PHP'
+        $file = <<<'PHP'
 <?php
 
 namespace App\Presentation\Http\Middleware;
@@ -227,8 +231,9 @@ final readonly class AuditRequestMiddleware
     {
         $response = $next($request);
         $routeName = $request->route()?->getName();
-        $eventCode = is_string($routeName)
-            ? config('apiblueprint_audit.route_event_codes.'.$routeName, 'audit.request')
+        $routeEventCodes = config('apiblueprint_audit.route_event_codes', []);
+        $eventCode = is_string($routeName) && is_array($routeEventCodes)
+            ? ($routeEventCodes[$routeName] ?? 'audit.request')
             : 'audit.request';
         $targetId = $request->route('id');
 
@@ -249,6 +254,8 @@ final readonly class AuditRequestMiddleware
     }
 }
 PHP;
+
+        return $file.PHP_EOL;
     }
 
     private function auditSemanticContractTestFile(array $endpoint): string
@@ -258,7 +265,7 @@ PHP;
         $method = var_export($endpoint['method'], true);
         $path = var_export($endpoint['path'], true);
 
-        return <<<PHP
+        $test = <<<PHP
 <?php
 
 namespace Tests\Feature;
@@ -289,6 +296,7 @@ final class AuditSemanticContractTest extends TestCase
         ]);
         \$request->headers->set('Authorization', 'Bearer semantic-audit-authorization-should-not-leak');
         \$request->attributes->set('correlation_id', 'audit-correlation-123');
+        \$request->setUserResolver(static fn () => null);
         \$route = new Route([$method], ltrim($path, '/'), static fn () => null);
         \$route->name($routeName);
         \$request->setRouteResolver(static fn () => \$route);
@@ -337,5 +345,7 @@ final class AuditSemanticContractTest extends TestCase
     }
 }
 PHP;
+
+        return $test.PHP_EOL;
     }
 }
