@@ -122,7 +122,7 @@ final readonly class GetMasterOpenApi
                             ],
                         ],
                     ],
-                    'UserListItem' => [
+                    'UserData' => [
                         'type' => 'object',
                         'required' => ['id', 'name', 'email', 'role'],
                         'properties' => [
@@ -175,6 +175,37 @@ final readonly class GetMasterOpenApi
                     'schema' => ['type' => 'string'],
                 ];
             }
+        }
+
+        if ($feature['id'] === 'users.show') {
+            return [
+                '200' => [
+                    'description' => 'Usuario encontrado.',
+                    'content' => [
+                        'application/json' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'required' => ['data'],
+                                'properties' => [
+                                    'data' => ['$ref' => '#/components/schemas/UserData'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                '401' => [
+                    'description' => 'Autenticación requerida.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+                '403' => [
+                    'description' => 'Se requieren privilegios de administrador.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+                '404' => [
+                    'description' => 'Usuario no encontrado.',
+                    'content' => ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/ProblemDetails']]],
+                ],
+            ];
         }
 
         if (str_ends_with($feature['id'], '.list')) {
@@ -253,7 +284,7 @@ final readonly class GetMasterOpenApi
                                 'type' => 'object',
                                 'required' => ['data', 'meta'],
                                 'properties' => [
-                                    'data' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/UserListItem']],
+                                    'data' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/UserData']],
                                     'meta' => ['$ref' => '#/components/schemas/ListMeta'],
                                 ],
                             ],

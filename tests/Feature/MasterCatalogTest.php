@@ -33,10 +33,14 @@ final class MasterCatalogTest extends TestCase
         $this->assertTrue($features['users.list']['exportable']);
         $this->assertTrue($features['users.list']['openapi_ready']);
         $this->assertTrue($features['users.list']['tests_ready']);
+        $this->assertSame('implemented', $features['users.show']['implementation_status']);
+        $this->assertTrue($features['users.show']['exportable']);
+        $this->assertTrue($features['users.show']['openapi_ready']);
+        $this->assertTrue($features['users.show']['tests_ready']);
 
         $saas = collect($response->json('applications'))->firstWhere('id', 'saas');
         $this->assertSame('partial', $saas['status']);
-        $this->assertSame(['implemented' => 3, 'total' => 8], $saas['coverage']);
+        $this->assertSame(['implemented' => 4, 'total' => 8], $saas['coverage']);
 
         $commerce = collect($response->json('applications'))->firstWhere('id', 'commerce');
         $this->assertSame('partial', $commerce['status']);
@@ -92,8 +96,13 @@ final class MasterCatalogTest extends TestCase
         $this->assertSame('users.list', $paths['/api/v1/users']['get']['x-apiblueprint-feature-id']);
         $this->assertSame([['bearerAuth' => []]], $paths['/api/v1/users']['get']['security']);
         $this->assertArrayHasKey('403', $paths['/api/v1/users']['get']['responses']);
-        $this->assertSame('#/components/schemas/UserListItem', $paths['/api/v1/users']['get']['responses']['200']['content']['application/json']['schema']['properties']['data']['items']['$ref']);
-        $this->assertCount(5, $paths);
+        $this->assertSame('#/components/schemas/UserData', $paths['/api/v1/users']['get']['responses']['200']['content']['application/json']['schema']['properties']['data']['items']['$ref']);
+        $this->assertSame('users.show', $paths['/api/v1/users/{id}']['get']['x-apiblueprint-feature-id']);
+        $this->assertSame([['bearerAuth' => []]], $paths['/api/v1/users/{id}']['get']['security']);
+        $this->assertSame('#/components/schemas/UserData', $paths['/api/v1/users/{id}']['get']['responses']['200']['content']['application/json']['schema']['properties']['data']['$ref']);
+        $this->assertArrayHasKey('403', $paths['/api/v1/users/{id}']['get']['responses']);
+        $this->assertArrayHasKey('404', $paths['/api/v1/users/{id}']['get']['responses']);
+        $this->assertCount(6, $paths);
     }
 
     public function test_catalog_administration_and_swagger_views_are_available(): void
