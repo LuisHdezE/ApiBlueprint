@@ -1524,7 +1524,6 @@ final class AuthLoginVerticalSliceTest extends TestCase
 PHP;
     }
 
-
     private function authLogoutControllerFile(string $className): string
     {
         return <<<PHP
