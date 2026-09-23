@@ -1658,6 +1658,8 @@ final class AuthLogoutVerticalSliceTest extends TestCase
         $this->assertNull(PersonalAccessToken::findToken($plainTextToken));
         $this->assertSame((string) $user->getKey(), (string) User::query()->findOrFail($user->getKey())->getKey());
 
+        app('auth')->forgetGuards();
+
         $this->withToken($plainTextToken)
             ->postJson('/api/v1/auth/logout')
             ->assertUnauthorized();

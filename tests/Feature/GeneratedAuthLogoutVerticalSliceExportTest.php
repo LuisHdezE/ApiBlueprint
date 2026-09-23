@@ -49,6 +49,7 @@ final class GeneratedAuthLogoutVerticalSliceExportTest extends TestCase
         $this->assertStringContainsString("postJson('/api/v1/auth/login'", $test);
         $this->assertStringContainsString("postJson('/api/v1/auth/logout'", $test);
         $this->assertStringContainsString('assertNull(PersonalAccessToken::findToken', $test);
+        $this->assertStringContainsString("app('auth')->forgetGuards();", $test);
 
         $this->assertIsString($openApi);
         $this->assertStringContainsString('/api/v1/auth/logout', $openApi);
