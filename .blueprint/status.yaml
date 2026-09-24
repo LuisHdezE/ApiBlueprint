@@ -1,5 +1,5 @@
 blueprint_version: 0.5.4
-updated_at: '2026-09-23T21:38:32-03:00'
+updated_at: '2026-09-23T23:30:00-03:00'
 phases:
   brownfield_inspection:
     status: COMPLETE
@@ -17,8 +17,8 @@ phases:
     status: COMPLETE
     progress: 100
   interface_scope_baseline:
-    status: NOT_STARTED
-    progress: 0
+    status: COMPLETE
+    progress: 100
   architecture_security_data:
     status: IN_PROGRESS
     progress: 80
@@ -113,6 +113,20 @@ checks:
     status: PASS
     verification: evidence
     evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
+  ui.interface_scope_baseline:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BPADOPT007A-INTERFACE-SCOPE, EVD-BPADOPT007A-SCOPE-QA]
+  ui.interface_scope_traceability:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BPADOPT007A-INTERFACE-SCOPE, EVD-BPADOPT007A-SCOPE-QA, EVD-BPADOPT007A-DOCUMENTATION]
+    note: WEB-001, WEB-002 and WEB-003 map to real Brownfield routes/views; API-backed dependencies remain unresolved rather than receiving invented operationIds.
+  ui.brownfield_observed_interface_scope:
+    status: PASS
+    verification: evidence
+    evidence_ids: [EVD-BPADOPT007A-INTERFACE-SCOPE, EVD-BPADOPT007A-SCOPE-QA]
+    note: The baseline contains only observed existing Blade surfaces and introduces no proposed replacement UI.
   architecture.domain_model:
     status: PENDING
     verification: evidence
@@ -296,8 +310,10 @@ gates:
     evaluated_at: '2026-09-23T12:50:00-03:00'
     evidence_ids: [EVD-BPADOPT002-REQUIREMENTS-CATALOG, EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
   interface_scope_ready:
-    status: PENDING
-    evaluated_at: null
+    status: PASS
+    evaluated_at: '2026-09-23T23:30:00-03:00'
+    evidence_ids: [EVD-BPADOPT007A-INTERFACE-SCOPE, EVD-BPADOPT007A-SCOPE-QA, EVD-BPADOPT007A-DOCUMENTATION]
+    note: Brownfield SCOPE_BASELINE is complete and descriptive only; it does not authorize EXECUTABLE_INVENTORY or downstream client delivery while api_gate remains blocked.
   architecture_ready:
     status: BLOCKED
     evaluated_at: '2026-09-23T20:16:00-03:00'
@@ -453,3 +469,12 @@ artifacts:
   - id: EVD-BPADOPT006-DOCUMENTATION
     type: file
     value: docs/delivery/maintainability-hardening.md
+  - id: EVD-BPADOPT007A-INTERFACE-SCOPE
+    type: file
+    value: .blueprint/ui/interface-scope-baseline.json
+  - id: EVD-BPADOPT007A-SCOPE-QA
+    type: test_report
+    value: tests/Feature/InterfaceScopeBaselineTest.php
+  - id: EVD-BPADOPT007A-DOCUMENTATION
+    type: file
+    value: docs/delivery/client-ui-governance.md
