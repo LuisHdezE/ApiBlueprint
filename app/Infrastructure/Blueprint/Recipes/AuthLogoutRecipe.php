@@ -192,6 +192,4 @@ final class AuthLogoutVerticalSliceTest extends TestCase
     }
 }
 PHP;
-    }
-
-}
+    }}

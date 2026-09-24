@@ -54,6 +54,4 @@ final readonly class UserData
     }
 }
 PHP;
-    }
-
-}
+    }}

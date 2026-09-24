@@ -78,6 +78,4 @@ return new class extends Migration
     }
 };
 PHP;
-    }
-
-}
+    }}

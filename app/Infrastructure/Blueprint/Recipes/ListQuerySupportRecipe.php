@@ -342,6 +342,4 @@ $strategyRule
     }
 }
 PHP;
-    }
-
-}
+    }}

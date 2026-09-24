@@ -385,6 +385,4 @@ $paginationTest
     }
 }
 PHP;
-    }
-
-}
+    }}
