@@ -11,20 +11,44 @@ final class ListQuerySupportRecipe extends AbstractLaravelFeatureRecipe
 
     public function endpointIds(): array
     {
-        return [
-            'users.list',
-            'products.list',
-        ];
+        return [];
+    }
+
+    public function matches(array $manifest): bool
+    {
+        foreach ($manifest['endpoints'] ?? [] as $endpoint) {
+            if (is_array($endpoint) && str_ends_with((string) ($endpoint['id'] ?? ''), '.list')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function files(array $manifest): array
     {
-        return [
+        $files = [
             'app/Application/Shared/Query/QueryOptions.php' => $this->queryOptionsFile(),
             'app/Presentation/Http/Support/QueryOptionsParser.php' => $this->queryOptionsParserFile($manifest),
-            'app/Infrastructure/Database/DatabaseQueryPaginator.php' => $this->databaseQueryPaginatorFile(),
-            'app/Presentation/Http/Support/ListQueryValidator.php' => $this->listQueryValidatorFile($manifest),
         ];
+
+        if ($this->hasExecutableListEndpoint($manifest)) {
+            $files['app/Infrastructure/Database/DatabaseQueryPaginator.php'] = $this->databaseQueryPaginatorFile();
+            $files['app/Presentation/Http/Support/ListQueryValidator.php'] = $this->listQueryValidatorFile($manifest);
+        }
+
+        return $files;
+    }
+
+    private function hasExecutableListEndpoint(array $manifest): bool
+    {
+        foreach ($manifest['endpoints'] ?? [] as $endpoint) {
+            if (is_array($endpoint) && in_array($endpoint['id'] ?? null, ['users.list', 'products.list'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function queryOptionsFile(): string

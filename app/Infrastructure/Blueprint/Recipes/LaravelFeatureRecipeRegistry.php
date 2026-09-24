@@ -111,23 +111,9 @@ final class LaravelFeatureRecipeRegistry
     /** @return list<LaravelFeatureRecipe> */
     private function selected(array $manifest): array
     {
-        $endpointIds = [];
-        foreach ($manifest['endpoints'] ?? [] as $endpoint) {
-            if (is_array($endpoint) && is_string($endpoint['id'] ?? null)) {
-                $endpointIds[$endpoint['id']] = true;
-            }
-        }
-
-        $selected = [];
-        foreach ($this->recipes as $recipe) {
-            foreach ($recipe->endpointIds() as $endpointId) {
-                if (isset($endpointIds[$endpointId])) {
-                    $selected[] = $recipe;
-                    break;
-                }
-            }
-        }
-
-        return $selected;
+        return array_values(array_filter(
+            $this->recipes,
+            static fn (LaravelFeatureRecipe $recipe): bool => $recipe->matches($manifest),
+        ));
     }
 }

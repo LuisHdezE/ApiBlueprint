@@ -8,6 +8,8 @@ interface LaravelFeatureRecipe
 
     public function endpointIds(): array;
 
+    public function matches(array $manifest): bool;
+
     public function files(array $manifest): array;
 
     public function controller(array $endpoint, string $className): ?string;
