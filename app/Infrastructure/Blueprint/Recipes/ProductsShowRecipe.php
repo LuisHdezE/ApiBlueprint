@@ -203,4 +203,5 @@ final class ProductsShowVerticalSliceTest extends TestCase
     }
 }
 PHP;
-    }}
+    }
+}

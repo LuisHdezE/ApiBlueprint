@@ -361,4 +361,5 @@ $testMethods
     }
 }
 PHP;
-    }}
+    }
+}

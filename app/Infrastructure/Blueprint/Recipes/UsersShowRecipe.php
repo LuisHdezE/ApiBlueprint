@@ -243,4 +243,5 @@ final class UsersShowVerticalSliceTest extends TestCase
     }
 }
 PHP;
-    }}
+    }
+}

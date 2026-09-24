@@ -317,4 +317,5 @@ final class UsersCreateVerticalSliceTest extends TestCase
     }
 }
 PHP;
-    }}
+    }
+}
