@@ -69,15 +69,19 @@ jobs:
       - name: Generated solution acceptance
         run: bash scripts/accept-generated-solutions.sh
 
+      - name: Security QA
+        run: bash scripts/run-security-qa.sh
+
       - name: Operational Postman contract
         run: bash scripts/run-postman-operational-contract.sh
 
-      - name: Upload operational contract evidence
+      - name: Upload security and operational contract evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: bp-adopt-004-operational-contract
+          name: governed-api-qa
           path: |
+            storage/app/qa/security-qa-report.json
             storage/app/qa/newman-report.json
             storage/app/qa/audit-runtime-report.json
           if-no-files-found: warn
