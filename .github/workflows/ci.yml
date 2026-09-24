@@ -57,6 +57,9 @@ jobs:
       - name: API evolution guard self-test
         run: bash scripts/test-api-evolution-guard.sh
 
+      - name: Generated export behavior parity
+        run: python3 scripts/export-behavior-fingerprint.py verify .blueprint/export-behavior-baseline.json
+
       - name: Route contract smoke
         run: php artisan route:list --path=api/v1
 

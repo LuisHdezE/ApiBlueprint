@@ -1,5 +1,5 @@
 blueprint_version: 0.5.4
-updated_at: '2026-09-23T20:16:00-03:00'
+updated_at: '2026-09-23T21:38:32-03:00'
 phases:
   brownfield_inspection:
     status: COMPLETE
@@ -219,8 +219,8 @@ checks:
   api.architecture_implementation_conformance:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-ARCH-CONFORMANCE-ROOT, EVD-BPADOPT003-EXPORT-QA, EVD-BPADOPT003-GENERATED-ACCEPTANCE]
-    note: Root and exported-project conformance pass; generated guardrails execute inside Blank, CRUD, SaaS and Commerce acceptance.
+    evidence_ids: [EVD-ARCH-CONFORMANCE-ROOT, EVD-BPADOPT003-EXPORT-QA, EVD-BPADOPT003-GENERATED-ACCEPTANCE, EVD-BPADOPT006-RECIPE-REGISTRY, EVD-BPADOPT006-REGISTRY-QA, EVD-BPADOPT006-PARITY-GUARD, EVD-BPADOPT006-CI]
+    note: Root and exported-project boundaries pass. BP-ADOPT-006 decomposes the ZIP exporter into registrable recipes while exact five-profile export parity remains CI-enforced.
   api.openapi:
     status: PASS
     verification: evidence
@@ -435,3 +435,21 @@ artifacts:
   - id: EVD-BPADOPT005-VERSIONING-POLICY
     type: file
     value: docs/delivery/api-evolution.md
+  - id: EVD-BPADOPT006-EXPORT-BASELINE
+    type: file
+    value: .blueprint/export-behavior-baseline.json
+  - id: EVD-BPADOPT006-PARITY-GUARD
+    type: test_report
+    value: scripts/export-behavior-fingerprint.py
+  - id: EVD-BPADOPT006-RECIPE-REGISTRY
+    type: file
+    value: app/Infrastructure/Blueprint/Recipes/LaravelFeatureRecipeRegistry.php
+  - id: EVD-BPADOPT006-REGISTRY-QA
+    type: test_report
+    value: tests/Unit/LaravelFeatureRecipeRegistryTest.php
+  - id: EVD-BPADOPT006-CI
+    type: ci_run
+    value: https://github.com/LuisHdezE/ApiBlueprint/actions/runs/35939177086
+  - id: EVD-BPADOPT006-DOCUMENTATION
+    type: file
+    value: docs/delivery/maintainability-hardening.md
