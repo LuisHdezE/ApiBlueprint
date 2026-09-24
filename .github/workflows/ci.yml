@@ -57,6 +57,17 @@ jobs:
       - name: API evolution guard self-test
         run: bash scripts/test-api-evolution-guard.sh
 
+      - name: Capture BP-ADOPT-006 export behavior baseline candidate
+        run: python3 scripts/export-behavior-fingerprint.py capture storage/app/qa/export-behavior-baseline.candidate.json aaafa404995204683f5be14d90aa8779e8ba97be
+
+      - name: Upload BP-ADOPT-006 export behavior baseline candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bp-adopt-006-export-behavior-baseline
+          path: storage/app/qa/export-behavior-baseline.candidate.json
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Route contract smoke
         run: php artisan route:list --path=api/v1
 
