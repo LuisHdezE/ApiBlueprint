@@ -1,0 +1,59 @@
+{
+  "schema_version": "0.5.4",
+  "evidence": [
+    {
+      "id": "EVD-BPADOPT006-EXPORT-BASELINE",
+      "type": "file",
+      "value": ".blueprint/export-behavior-baseline.json",
+      "description": "Baseline semántica pre-refactor de los cinco perfiles generados, basada en path y SHA-256 de cada archivo.",
+      "scope": {"level": "phase", "id": "api_implementation"},
+      "created_at": "2026-09-23T21:38:32-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT006-PARITY-GUARD",
+      "type": "test_report",
+      "value": "scripts/export-behavior-fingerprint.py",
+      "description": "Guard ejecutable que compara cada export con la baseline y reporta paths añadidos, eliminados o modificados.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T21:38:32-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT006-RECIPE-REGISTRY",
+      "type": "file",
+      "value": "app/Infrastructure/Blueprint/Recipes/LaravelFeatureRecipeRegistry.php",
+      "description": "Registry de recetas seleccionables por manifest con detección de conflictos de archivos, controllers y dependencias Composer.",
+      "scope": {"level": "phase", "id": "api_implementation"},
+      "created_at": "2026-09-23T21:38:32-03:00",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-BPADOPT006-REGISTRY-QA",
+      "type": "test_report",
+      "value": "tests/Unit/LaravelFeatureRecipeRegistryTest.php",
+      "description": "QA de orden estable de recetas y rechazo explícito de colisiones de archivos con contenido diferente.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T21:38:32-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT006-CI",
+      "type": "ci_run",
+      "value": "https://github.com/LuisHdezE/ApiBlueprint/actions/runs/35939177086",
+      "description": "CI #133: Pint, root tests, API evolution, paridad exacta de exports, generated solution acceptance y Newman completaron SUCCESS.",
+      "scope": {"level": "phase", "id": "api_qa"},
+      "created_at": "2026-09-23T21:38:32-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT006-DOCUMENTATION",
+      "type": "file",
+      "value": "docs/delivery/maintainability-hardening.md",
+      "description": "Diseño del refactor, baseline, reglas de recipe registry, QA de paridad y no-claims de BP-ADOPT-006.",
+      "scope": {"level": "phase", "id": "architecture_security_data"},
+      "created_at": "2026-09-23T21:38:32-03:00",
+      "producer": "mixed"
+    }
+  ]
+}
