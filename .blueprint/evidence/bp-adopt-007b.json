@@ -17,7 +17,7 @@
       "description": "ADR aceptado para límites Clean Architecture y conformance ejecutable en root y exports.",
       "scope": {"level": "phase", "id": "architecture_security_data"},
       "created_at": "2026-09-24T00:55:00-03:00",
-      "producer": "human"
+      "producer": "mixed"
     },
     {
       "id": "EVD-BPADOPT007B-ADR-STATELESS",
@@ -26,7 +26,7 @@
       "description": "ADR aceptado que conserva root stateless y separa propiedad de datos/runtime generado.",
       "scope": {"level": "phase", "id": "architecture_security_data"},
       "created_at": "2026-09-24T00:55:00-03:00",
-      "producer": "human"
+      "producer": "mixed"
     },
     {
       "id": "EVD-BPADOPT007B-ADR-PUBLIC-COMPOSER",
@@ -35,7 +35,7 @@
       "description": "ADR aceptado para mantener el compositor root público, tratar manifest como input no confiable y separar autoridad de seguridad de APIs generadas.",
       "scope": {"level": "phase", "id": "architecture_security_data"},
       "created_at": "2026-09-24T00:55:00-03:00",
-      "producer": "human"
+      "producer": "mixed"
     },
     {
       "id": "EVD-BPADOPT007B-SECURITY-MODEL",
