@@ -1,0 +1,184 @@
+{
+  "schema_version": "0.5.4",
+  "project": "LuisHdezE/ApiBlueprint",
+  "mode": "brownfield",
+  "maturity": "SCOPE_BASELINE",
+  "baseline_revision": "scope-2026-09-24-main-63da264e",
+  "items": [
+    {
+      "id": "WEB-001",
+      "platform": "web",
+      "module": "Composer",
+      "name": "Compositor de API",
+      "purpose": "Configurar una solución ApiBlueprint a partir de plantillas, endpoints, exposición y capacidades de gobierno, y exportarla como ZIP.",
+      "source_classification": "OBSERVED",
+      "implementation_status": "EXISTING",
+      "requirements": [],
+      "roles": ["anonymous"],
+      "permissions": [],
+      "data": [
+        {
+          "name": "blueprint_catalog",
+          "source": "api",
+          "authoritative": true,
+          "note": "La vista consume el catálogo administrativo de ApiBlueprint; el operationId autoritativo se reconciliará después del API Gate."
+        },
+        {
+          "name": "resolved_manifest",
+          "source": "api",
+          "authoritative": true,
+          "note": "La configuración se canonicaliza en backend antes de exportar; el operationId administrativo todavía no forma parte del contrato OpenAPI gobernado para clientes."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Seleccionar plantilla inicial",
+          "kind": "local",
+          "source_classification": "OBSERVED"
+        },
+        {
+          "name": "Editar endpoints, exposición y gobierno",
+          "kind": "local",
+          "source_classification": "OBSERVED"
+        },
+        {
+          "name": "Exportar solución ZIP",
+          "kind": "download",
+          "source_classification": "OBSERVED",
+          "note": "La acción usa el endpoint administrativo POST /api/v1/blueprint/export; no se inventa operationId en esta madurez."
+        }
+      ],
+      "states": ["default", "loading", "success", "error", "422"],
+      "navigation": {
+        "route": "/",
+        "entry_points": [],
+        "destinations": []
+      },
+      "dependencies": [],
+      "responsive": "El hero, las plantillas, el workspace y las filas de endpoints colapsan progresivamente a una columna en anchos reducidos.",
+      "accessibility": [
+        "Los controles principales usan elementos nativos button, input y select.",
+        "Los toggles de endpoints exponen aria-label descriptivo."
+      ],
+      "notes": [
+        "Vista observada en resources/views/welcome.blade.php.",
+        "Ruta observada en routes/web.php como landing."
+      ],
+      "unresolved_api_needs": [
+        "Formalizar el contrato administrativo consumido por el compositor, incluyendo operationIds canónicos para catalog, resolve y export, antes de EXECUTABLE_INVENTORY.",
+        "Formalizar requirements específicos de la UI del compositor antes de la reconciliación ejecutable."
+      ]
+    },
+    {
+      "id": "WEB-002",
+      "platform": "web",
+      "module": "Catalog",
+      "name": "Catálogo maestro",
+      "purpose": "Inspeccionar presets de aplicación y la Master Feature Library, incluyendo estado, exportabilidad, OpenAPI, tests y reutilización.",
+      "source_classification": "OBSERVED",
+      "implementation_status": "EXISTING",
+      "requirements": [],
+      "roles": ["anonymous"],
+      "permissions": [],
+      "data": [
+        {
+          "name": "master_catalog",
+          "source": "api",
+          "authoritative": true,
+          "note": "GET /api/v1/blueprint/catalog alimenta aplicaciones, features, estados y cobertura; el operationId administrativo queda pendiente de reconciliación."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Buscar features",
+          "kind": "local",
+          "source_classification": "OBSERVED"
+        },
+        {
+          "name": "Filtrar por estado y módulo",
+          "kind": "local",
+          "source_classification": "OBSERVED"
+        },
+        {
+          "name": "Navegar al compositor o Swagger",
+          "kind": "navigate",
+          "source_classification": "OBSERVED"
+        }
+      ],
+      "states": ["default", "loading", "empty", "filtered_empty", "error"],
+      "navigation": {
+        "route": "/catalogo",
+        "entry_points": ["WEB-003"],
+        "destinations": ["WEB-001", "WEB-003"]
+      },
+      "dependencies": [],
+      "responsive": "Aplicaciones y estadísticas pasan de cuatro columnas a dos y luego a una; la tabla conserva scroll horizontal en espacios estrechos.",
+      "accessibility": [
+        "La búsqueda usa input type=search y los filtros usan selects nativos.",
+        "La navegación entre superficies usa enlaces HTML nativos."
+      ],
+      "notes": [
+        "Vista observada en resources/views/catalog.blade.php.",
+        "Ruta observada en routes/web.php como catalog.admin."
+      ],
+      "unresolved_api_needs": [
+        "Formalizar el operationId canónico del catálogo administrativo antes de EXECUTABLE_INVENTORY.",
+        "Formalizar requirements específicos de consulta y filtrado de la UI del catálogo antes de la reconciliación ejecutable."
+      ]
+    },
+    {
+      "id": "WEB-003",
+      "platform": "web",
+      "module": "API Documentation",
+      "name": "Swagger vivo",
+      "purpose": "Explorar el contrato OpenAPI vivo de la Master Feature Library sin habilitar ejecución interactiva contra el runtime administrativo.",
+      "source_classification": "OBSERVED",
+      "implementation_status": "EXISTING",
+      "requirements": [],
+      "roles": ["anonymous"],
+      "permissions": [],
+      "data": [
+        {
+          "name": "master_openapi",
+          "source": "api",
+          "authoritative": true,
+          "note": "Swagger UI carga GET /api/v1/blueprint/openapi; el operationId de ese endpoint administrativo no se inventa en SCOPE_BASELINE."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Explorar contrato OpenAPI",
+          "kind": "read",
+          "source_classification": "OBSERVED"
+        },
+        {
+          "name": "Navegar al compositor o catálogo",
+          "kind": "navigate",
+          "source_classification": "OBSERVED"
+        }
+      ],
+      "states": ["default", "loading", "error"],
+      "navigation": {
+        "route": "/swagger",
+        "entry_points": ["WEB-002"],
+        "destinations": ["WEB-001", "WEB-002"]
+      },
+      "dependencies": [],
+      "responsive": "La barra superior permite wrapping de enlaces; Swagger UI gestiona su propio layout responsive.",
+      "accessibility": [
+        "La navegación superior usa enlaces HTML nativos.",
+        "La superficie documental delega la interacción principal en Swagger UI 5."
+      ],
+      "notes": [
+        "Vista observada en resources/views/swagger.blade.php.",
+        "Ruta observada en routes/web.php como swagger.",
+        "Swagger UI 5 se carga actualmente desde jsDelivr; la estrategia de dependencia externa se decidirá en Client Architecture y no se cambia en este baseline.",
+        "tryItOutEnabled está deshabilitado en la UI observada."
+      ],
+      "unresolved_api_needs": [
+        "Formalizar el operationId canónico del endpoint administrativo que entrega el Master OpenAPI antes de EXECUTABLE_INVENTORY.",
+        "Formalizar requirements específicos de la UI documental antes de la reconciliación ejecutable."
+      ]
+    }
+  ]
+}
