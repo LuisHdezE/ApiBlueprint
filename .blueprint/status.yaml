@@ -1,5 +1,5 @@
 blueprint_version: 0.5.4
-updated_at: '2026-09-23T18:44:00-03:00'
+updated_at: '2026-09-23T20:16:00-03:00'
 phases:
   brownfield_inspection:
     status: COMPLETE
@@ -21,7 +21,7 @@ phases:
     progress: 0
   architecture_security_data:
     status: IN_PROGRESS
-    progress: 75
+    progress: 80
   api_contract_design:
     status: COMPLETE
     progress: 100
@@ -39,7 +39,7 @@ phases:
     progress: 90
   api_gate:
     status: BLOCKED
-    progress: 82
+    progress: 84
   interface_inventory:
     status: NOT_STARTED
     progress: 0
@@ -156,9 +156,10 @@ checks:
     verification: evidence
     evidence_ids: [EVD-GOVERNED-RUNTIME-QA]
   api.versioning_policy:
-    status: PENDING
+    status: PASS
     verification: evidence
-    note: Current routes use /api/v1, but an explicit versioning and compatibility policy has not yet been materialized.
+    evidence_ids: [EVD-BPADOPT005-VERSIONING-POLICY, EVD-BPADOPT005-CONTRACT-BASELINE, EVD-BPADOPT005-EVOLUTION-GUARD]
+    note: /api/v1 compatibility, breaking-change boundaries, major-version evolution, operationId stability and deprecation/revalidation rules are explicit and CI-enforced.
   api.scope_defined:
     status: PASS
     verification: evidence
@@ -190,7 +191,13 @@ checks:
   api.change_impact_analysis:
     status: N/A
     verification: evidence
-    note: Blueprint 0.5.4 makes this conditional after the initial API gate; ApiBlueprint has not passed that gate yet.
+    evidence_ids: [EVD-BPADOPT005-CONTRACT-BASELINE, EVD-BPADOPT005-EVOLUTION-GUARD, EVD-BPADOPT005-VERSIONING-POLICY]
+    note: Blueprint 0.5.4 activates this check after the initial API Gate when a contract change can affect existing consumers. No such post-gate change exists yet; the baseline and automatic impact guard are materialized for that transition.
+  api.affected_consumer_revalidation:
+    status: N/A
+    verification: evidence
+    evidence_ids: [EVD-BPADOPT005-GUARD-SELFTEST, EVD-BPADOPT005-VERSIONING-POLICY]
+    note: No API impact currently exists. Future operation-local impacts use affected_only revalidation; platform/project cross-cutting impacts escalate proportionally while preserving unrelated evidence.
   api.endpoints_implemented:
     status: PASS
     verification: evidence
@@ -245,7 +252,7 @@ checks:
   api.contract_validation:
     status: PASS
     verification: evidence
-    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-BPADOPT002-TRACEABILITY-QA, EVD-BPADOPT004-POSTMAN-COVERAGE, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
+    evidence_ids: [EVD-MASTER-CATALOG-CONTRACT, EVD-GENERATED-SOLUTION-ACCEPTANCE, EVD-BPADOPT002-TRACEABILITY-QA, EVD-BPADOPT004-POSTMAN-COVERAGE, EVD-BPADOPT004-RUNTIME-ACCEPTANCE, EVD-BPADOPT005-EVOLUTION-GUARD]
   api.security_qa:
     status: PENDING
     verification: evidence
@@ -293,13 +300,13 @@ gates:
     evaluated_at: null
   architecture_ready:
     status: BLOCKED
-    evaluated_at: '2026-09-23T18:44:00-03:00'
-    note: Domain/ADR/security evidence, audit retention and explicit API versioning policy remain incomplete.
+    evaluated_at: '2026-09-23T20:16:00-03:00'
+    note: Domain/ADR/security evidence and audit retention remain incomplete. API versioning/evolution policy is now explicit and executable.
   api_contract_ready:
     status: BLOCKED
-    evaluated_at: '2026-09-23T18:44:00-03:00'
-    evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-OPENAPI-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA]
-    note: Required contract checks, including executable Postman coverage, are complete, but Blueprint sequencing does not allow this gate to pass while architecture_ready remains blocked.
+    evaluated_at: '2026-09-23T20:16:00-03:00'
+    evidence_ids: [EVD-BPADOPT002-FEATURE-TRACEABILITY, EVD-BPADOPT002-OPENAPI-TRACEABILITY, EVD-BPADOPT002-TRACEABILITY-QA, EVD-BPADOPT005-CONTRACT-BASELINE, EVD-BPADOPT005-EVOLUTION-GUARD]
+    note: Required contract checks, Postman coverage and API evolution guardrails are complete, but Blueprint sequencing does not allow this gate to pass while architecture_ready remains blocked.
   api_implemented:
     status: PASS
     evaluated_at: '2026-09-23T11:39:00-03:00'
@@ -314,13 +321,13 @@ gates:
     evidence_ids: [EVD-BPADOPT004-POSTMAN-COLLECTION, EVD-BPADOPT004-POSTMAN-ENVIRONMENT, EVD-BPADOPT004-POSTMAN-COVERAGE, EVD-BPADOPT004-RUNTIME-ACCEPTANCE]
   api_qa_pass:
     status: BLOCKED
-    evaluated_at: '2026-09-23T18:44:00-03:00'
-    evidence_ids: [EVD-BPADOPT004-RUNTIME-ACCEPTANCE, EVD-BPADOPT004-AUDIT-EXPORT-QA]
-    note: Positive, negative, contract, Postman and semantic audit QA pass; a complete Blueprint security-QA evidence set remains open.
+    evaluated_at: '2026-09-23T20:16:00-03:00'
+    evidence_ids: [EVD-BPADOPT004-RUNTIME-ACCEPTANCE, EVD-BPADOPT004-AUDIT-EXPORT-QA, EVD-BPADOPT005-GUARD-SELFTEST]
+    note: Positive, negative, contract, Postman, semantic audit and API-evolution QA pass; a complete Blueprint security-QA evidence set remains open.
   api_gate:
     status: BLOCKED
-    evaluated_at: '2026-09-23T18:44:00-03:00'
-    note: Postman and semantic audit QA are closed; architecture/security evidence, audit retention, explicit API versioning policy and complete security QA remain open prerequisites.
+    evaluated_at: '2026-09-23T20:16:00-03:00'
+    note: Postman, semantic audit QA and API evolution governance are closed; architecture/security evidence, audit retention and complete security QA remain open prerequisites.
   interface_inventory_ready:
     status: PENDING
     evaluated_at: null
@@ -416,3 +423,15 @@ artifacts:
   - id: EVD-BPADOPT004-DOCUMENTATION
     type: file
     value: docs/delivery/operational-contract-audit-qa.md
+  - id: EVD-BPADOPT005-CONTRACT-BASELINE
+    type: file
+    value: .blueprint/api-contract-baseline.json
+  - id: EVD-BPADOPT005-EVOLUTION-GUARD
+    type: test_report
+    value: scripts/api-evolution.php
+  - id: EVD-BPADOPT005-GUARD-SELFTEST
+    type: test_report
+    value: scripts/test-api-evolution-guard.sh
+  - id: EVD-BPADOPT005-VERSIONING-POLICY
+    type: file
+    value: docs/delivery/api-evolution.md
