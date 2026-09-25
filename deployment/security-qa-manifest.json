@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.3",
+  "generator": "ApiBlueprint",
+  "project": {
+    "name": "ApiBlueprint Security QA",
+    "api_version": "v1"
+  },
+  "template": "custom",
+  "governance": {
+    "authentication": "none",
+    "rbac": false,
+    "correlation_id": true,
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 2
+    },
+    "pagination": {
+      "strategy": "cursor",
+      "default_size": 25,
+      "max_size": 100
+    },
+    "filtering": true,
+    "sorting": true,
+    "idempotency": false,
+    "audit": false
+  },
+  "endpoints": [
+    {"id": "products.list", "exposure": "public"}
+  ]
+}
