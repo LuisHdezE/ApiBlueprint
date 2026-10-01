@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
+use Symfony\Component\Yaml\Yaml;
 use Tests\TestCase;
 
 final class ExecutableInterfaceInventoryTest extends TestCase
@@ -26,7 +28,7 @@ final class ExecutableInterfaceInventoryTest extends TestCase
                 $this->assertArrayNotHasKey($operationId, $operations);
                 $operations[$operationId] = strtoupper($method).' '.$path;
                 $route = app('router')->getRoutes()->match(
-                    \Illuminate\Http\Request::create($path, strtoupper($method))
+                    Request::create($path, strtoupper($method))
                 );
                 $this->assertContains(strtoupper($method), $route->methods());
                 $this->assertSame(ltrim($path, '/'), $route->uri());
@@ -99,6 +101,6 @@ final class ExecutableInterfaceInventoryTest extends TestCase
 
     private function readStatus(): array
     {
-        return \Symfony\Component\Yaml\Yaml::parseFile(base_path('.blueprint/status.yaml'));
+        return Yaml::parseFile(base_path('.blueprint/status.yaml'));
     }
 }
