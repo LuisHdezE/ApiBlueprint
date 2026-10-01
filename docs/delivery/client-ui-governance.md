@@ -1,6 +1,8 @@
 # BP-ADOPT-007 — Client/UI governance
 
-## Current boundary: BP-ADOPT-007A Interface Scope Baseline
+## Scope baseline and BP-ADOPT-007C reconciliation
+
+The BP-ADOPT-007A scope baseline remains immutable descriptive evidence. After the API Gate passed, BP-ADOPT-007C reconciled its three stable IDs in `.blueprint/ui/interface-inventory.json` with real root-composer operationIds, root-web requirements and slice ownership. See `docs/delivery/executable-interface-inventory.md` for the current executable inventory boundary. The historical description below records the earlier scope checkpoint.
 
 ApiBlueprint adopts the Blueprint 0.5.4 client-delivery model as a Brownfield consumer. The current web client is intentionally preserved: Laravel Blade views with inline CSS/JavaScript remain the observed implementation until an approved slice-specific migration boundary exists.
 
@@ -68,6 +70,6 @@ It must **not** promote any of the following while `api_gate` is blocked:
 
 ## Next boundary
 
-BP-ADOPT-007B begins only after the initial `api_gate` is legitimately reconciled to PASS. At that point the baseline is reconciled into `EXECUTABLE_INVENTORY`, every API-backed dependency receives a real canonical `operationId`, requirements/permissions are bound, and committed interfaces are assigned to Functional Interface Slices.
+BP-ADOPT-007C follows the legitimately passing initial `api_gate`. Its executable reconciliation uses the root composer contract, binds requirements/permissions and assigns committed interfaces to future Functional Interface Slices.
 
 No production deployment is part of BP-ADOPT-007A.

@@ -1,0 +1,61 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ApiBlueprint root composer API",
+    "version": "1.0.0",
+    "description": "Contrato de los endpoints del compositor raíz. El OpenAPI servido en /api/v1/blueprint/openapi describe las APIs generadas y pertenece a otro boundary."
+  },
+  "paths": {
+    "/api/v1/meta/status": {
+      "get": {
+        "operationId": "root_status_show",
+        "summary": "Consultar estado del compositor",
+        "responses": {"200": {"description": "Estado del compositor", "content": {"application/json": {"schema": {"type": "object"}}}}}
+      }
+    },
+    "/api/v1/blueprint/catalog": {
+      "get": {
+        "operationId": "root_blueprint_catalog_show",
+        "summary": "Consultar catálogo del compositor",
+        "responses": {"200": {"description": "Plantillas, endpoints, capacidades, aplicaciones y features", "content": {"application/json": {"schema": {"type": "object"}}}}}
+      }
+    },
+    "/api/v1/blueprint/openapi": {
+      "get": {
+        "operationId": "root_blueprint_openapi_show",
+        "summary": "Consultar Master OpenAPI de las APIs generadas",
+        "responses": {"200": {"description": "Documento OpenAPI de features exportables", "content": {"application/json": {"schema": {"type": "object"}}}}}
+      }
+    },
+    "/api/v1/blueprint/resolve": {
+      "post": {
+        "operationId": "root_blueprint_manifest_resolve",
+        "summary": "Validar y resolver un manifest",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "responses": {
+          "200": {"description": "Manifest resuelto", "content": {"application/json": {"schema": {"type": "object"}}}},
+          "422": {"$ref": "#/components/responses/InvalidManifest"}
+        }
+      }
+    },
+    "/api/v1/blueprint/export": {
+      "post": {
+        "operationId": "root_blueprint_solution_export",
+        "summary": "Exportar una solución ZIP desde un manifest",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object"}}}},
+        "responses": {
+          "200": {"description": "Archivo ZIP descargable", "headers": {"Content-Disposition": {"description": "Nombre del archivo", "schema": {"type": "string"}}}, "content": {"application/zip": {"schema": {"type": "string", "format": "binary"}}}},
+          "422": {"$ref": "#/components/responses/InvalidManifest"}
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "InvalidManifest": {
+        "description": "Manifest inválido",
+        "content": {"application/problem+json": {"schema": {"type": "object", "required": ["type", "title", "status", "detail", "errors"], "properties": {"type": {"type": "string"}, "title": {"type": "string"}, "status": {"const": 422}, "detail": {"type": "string"}, "errors": {"type": "object"}}}}}
+      }
+    }
+  }
+}

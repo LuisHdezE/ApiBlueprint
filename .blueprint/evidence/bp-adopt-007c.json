@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.5.4",
+  "evidence": [
+    {
+      "id": "EVD-BPADOPT007C-ROOT-CONTRACT",
+      "type": "openapi",
+      "value": ".blueprint/root-api-openapi.json",
+      "description": "OpenAPI independiente para las cinco rutas reales del compositor raíz, con operationIds vinculables al cliente web.",
+      "scope": {"level": "phase", "id": "interface_inventory"},
+      "created_at": "2026-10-01T11:40:00-03:00",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-BPADOPT007C-REQUIREMENTS",
+      "type": "file",
+      "value": ".blueprint/ui/interface-requirements.json",
+      "description": "Requisitos explícitos de las tres interfaces web del compositor raíz.",
+      "scope": {"level": "phase", "id": "interface_inventory"},
+      "created_at": "2026-10-01T11:40:00-03:00",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-BPADOPT007C-INVENTORY",
+      "type": "file",
+      "value": ".blueprint/ui/interface-inventory.json",
+      "description": "Reconciliación ejecutable COMMITTED de WEB-001 a WEB-003, conservando IDs de baseline y asignando bindings, prioridad y slice_id.",
+      "scope": {"level": "phase", "id": "interface_inventory"},
+      "created_at": "2026-10-01T11:40:00-03:00",
+      "producer": "mixed"
+    },
+    {
+      "id": "EVD-BPADOPT007C-INVENTORY-QA",
+      "type": "test_report",
+      "value": "tests/Feature/ExecutableInterfaceInventoryTest.php",
+      "description": "Prueba de rutas OpenAPI, identificadores estables, requisitos y llamadas HTTP reales de Blade.",
+      "scope": {"level": "phase", "id": "interface_inventory"},
+      "created_at": "2026-10-01T11:40:00-03:00",
+      "producer": "automatic"
+    },
+    {
+      "id": "EVD-BPADOPT007C-DOCUMENTATION",
+      "type": "file",
+      "value": "docs/delivery/executable-interface-inventory.md",
+      "description": "Decisión de boundary entre API raíz y generada, tabla de reconciliación y siguiente gate.",
+      "scope": {"level": "phase", "id": "interface_inventory"},
+      "created_at": "2026-10-01T11:40:00-03:00",
+      "producer": "mixed"
+    }
+  ]
+}
