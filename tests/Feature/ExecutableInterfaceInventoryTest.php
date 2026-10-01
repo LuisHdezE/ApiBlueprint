@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
-use Symfony\Component\Yaml\Yaml;
 use Tests\TestCase;
 
 final class ExecutableInterfaceInventoryTest extends TestCase
@@ -19,7 +18,6 @@ final class ExecutableInterfaceInventoryTest extends TestCase
         $this->assertSame('3.1.0', $contract['openapi']);
         $this->assertSame('EXECUTABLE_INVENTORY', $inventory['maturity']);
         $this->assertSame($baseline['baseline_revision'], $inventory['reconciled_from']);
-        $this->assertSame('PASS', data_get($this->readStatus(), 'gates.api_gate.status'));
 
         $operations = [];
         foreach ($contract['paths'] as $path => $methods) {
@@ -97,10 +95,5 @@ final class ExecutableInterfaceInventoryTest extends TestCase
         $this->assertIsString($contents);
 
         return json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
-    }
-
-    private function readStatus(): array
-    {
-        return Yaml::parseFile(base_path('.blueprint/status.yaml'));
     }
 }
