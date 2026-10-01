@@ -1,0 +1,256 @@
+{
+  "schema_version": "0.5.4",
+  "project": "LuisHdezE/ApiBlueprint",
+  "mode": "brownfield",
+  "maturity": "EXECUTABLE_INVENTORY",
+  "baseline_revision": "inventory-2026-10-01-main-47e6ff26",
+  "items": [
+    {
+      "id": "WEB-001",
+      "platform": "web",
+      "module": "Composer",
+      "name": "Compositor de API",
+      "purpose": "Configurar una solución ApiBlueprint a partir de plantillas, endpoints, exposición y capacidades de gobierno, y exportarla como ZIP.",
+      "source_classification": "OBSERVED",
+      "implementation_status": "EXISTING",
+      "requirements": [
+        "REQ-UI-001"
+      ],
+      "roles": [
+        "anonymous"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "blueprint_catalog",
+          "source": "api",
+          "authoritative": true,
+          "note": "La vista consume el catálogo administrativo de ApiBlueprint",
+          "operation_ids": [
+            "root_blueprint_catalog_show"
+          ]
+        },
+        {
+          "name": "resolved_manifest",
+          "source": "api",
+          "authoritative": true,
+          "note": "La configuración se canonicaliza en backend antes de exportar",
+          "operation_ids": [
+            "root_blueprint_manifest_resolve"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "name": "Seleccionar plantilla inicial",
+          "kind": "local",
+          "source_classification": "OBSERVED"
+        },
+        {
+          "name": "Editar endpoints, exposición y gobierno",
+          "kind": "local",
+          "source_classification": "OBSERVED"
+        },
+        {
+          "name": "Exportar solución ZIP",
+          "kind": "download",
+          "source_classification": "OBSERVED",
+          "note": "El compositor resuelve el manifest antes de exportar por los endpoints raíz documentados.",
+          "operation_ids": [
+            "root_blueprint_manifest_resolve",
+            "root_blueprint_solution_export"
+          ]
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "success",
+        "error",
+        "422"
+      ],
+      "navigation": {
+        "route": "/",
+        "entry_points": [],
+        "destinations": []
+      },
+      "dependencies": [],
+      "responsive": "El hero, las plantillas, el workspace y las filas de endpoints colapsan progresivamente a una columna en anchos reducidos.",
+      "accessibility": [
+        "Los controles principales usan elementos nativos button, input y select.",
+        "Los toggles de endpoints exponen aria-label descriptivo."
+      ],
+      "notes": [
+        "Vista observada en resources/views/welcome.blade.php.",
+        "Ruta observada en routes/web.php como landing.",
+        "La edición de selección y plantillas es local; sólo consultar, resolver y exportar cruzan el boundary HTTP raíz."
+      ],
+      "unresolved_api_needs": [],
+      "priority": 1,
+      "slice_id": "composer-web"
+    },
+    {
+      "id": "WEB-002",
+      "platform": "web",
+      "module": "Catalog",
+      "name": "Catálogo maestro",
+      "purpose": "Inspeccionar presets de aplicación y la Master Feature Library, incluyendo estado, exportabilidad, OpenAPI, tests y reutilización.",
+      "source_classification": "OBSERVED",
+      "implementation_status": "EXISTING",
+      "requirements": [
+        "REQ-UI-002"
+      ],
+      "roles": [
+        "anonymous"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "master_catalog",
+          "source": "api",
+          "authoritative": true,
+          "note": "GET /api/v1/blueprint/catalog alimenta aplicaciones, features, estados y cobertura",
+          "operation_ids": [
+            "root_blueprint_catalog_show"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "name": "Buscar features",
+          "kind": "local",
+          "source_classification": "OBSERVED"
+        },
+        {
+          "name": "Filtrar por estado y módulo",
+          "kind": "local",
+          "source_classification": "OBSERVED"
+        },
+        {
+          "name": "Navegar al compositor o Swagger",
+          "kind": "navigate",
+          "source_classification": "OBSERVED"
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "empty",
+        "filtered_empty",
+        "error"
+      ],
+      "navigation": {
+        "route": "/catalogo",
+        "entry_points": [
+          "WEB-003"
+        ],
+        "destinations": [
+          "WEB-001",
+          "WEB-003"
+        ]
+      },
+      "dependencies": [],
+      "responsive": "Aplicaciones y estadísticas pasan de cuatro columnas a dos y luego a una; la tabla conserva scroll horizontal en espacios estrechos.",
+      "accessibility": [
+        "La búsqueda usa input type=search y los filtros usan selects nativos.",
+        "La navegación entre superficies usa enlaces HTML nativos."
+      ],
+      "notes": [
+        "Vista observada en resources/views/catalog.blade.php.",
+        "Ruta observada en routes/web.php como catalog.admin.",
+        "Búsqueda y filtros se ejecutan localmente sobre la respuesta del catálogo."
+      ],
+      "unresolved_api_needs": [],
+      "priority": 2,
+      "slice_id": "catalog-web"
+    },
+    {
+      "id": "WEB-003",
+      "platform": "web",
+      "module": "API Documentation",
+      "name": "Swagger vivo",
+      "purpose": "Explorar el contrato OpenAPI vivo de la Master Feature Library sin habilitar ejecución interactiva contra el runtime administrativo.",
+      "source_classification": "OBSERVED",
+      "implementation_status": "EXISTING",
+      "requirements": [
+        "REQ-UI-003"
+      ],
+      "roles": [
+        "anonymous"
+      ],
+      "permissions": [],
+      "data": [
+        {
+          "name": "master_openapi",
+          "source": "api",
+          "authoritative": true,
+          "note": "Swagger UI carga GET /api/v1/blueprint/openapi",
+          "operation_ids": [
+            "root_blueprint_openapi_show"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "name": "Explorar contrato OpenAPI",
+          "kind": "read",
+          "source_classification": "OBSERVED",
+          "operation_ids": [
+            "root_blueprint_openapi_show"
+          ]
+        },
+        {
+          "name": "Navegar al compositor o catálogo",
+          "kind": "navigate",
+          "source_classification": "OBSERVED"
+        }
+      ],
+      "states": [
+        "default",
+        "loading",
+        "error"
+      ],
+      "navigation": {
+        "route": "/swagger",
+        "entry_points": [
+          "WEB-002"
+        ],
+        "destinations": [
+          "WEB-001",
+          "WEB-002"
+        ]
+      },
+      "dependencies": [],
+      "responsive": "La barra superior permite wrapping de enlaces; Swagger UI gestiona su propio layout responsive.",
+      "accessibility": [
+        "La navegación superior usa enlaces HTML nativos.",
+        "La superficie documental delega la interacción principal en Swagger UI 5."
+      ],
+      "notes": [
+        "Vista observada en resources/views/swagger.blade.php.",
+        "Ruta observada en routes/web.php como swagger.",
+        "Swagger UI 5 se carga actualmente desde jsDelivr; la estrategia de dependencia externa se decidirá en Client Architecture y no se cambia en este baseline.",
+        "tryItOutEnabled está deshabilitado en la UI observada.",
+        "Swagger UI ejecuta la lectura del OpenAPI generado; tryItOutEnabled=false."
+      ],
+      "unresolved_api_needs": [],
+      "priority": 3,
+      "slice_id": "swagger-web"
+    }
+  ],
+  "reconciled_from": "scope-2026-09-24-main-63da264e",
+  "baseline_reconciliation": [
+    {
+      "baseline_id": "WEB-001",
+      "disposition": "COMMITTED"
+    },
+    {
+      "baseline_id": "WEB-002",
+      "disposition": "COMMITTED"
+    },
+    {
+      "baseline_id": "WEB-003",
+      "disposition": "COMMITTED"
+    }
+  ]
+}

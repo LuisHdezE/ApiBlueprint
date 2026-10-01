@@ -1,0 +1,9 @@
+{
+  "schema_version": "0.5.4",
+  "boundary": "ApiBlueprint root composer web client",
+  "requirements": [
+    {"id": "REQ-UI-001", "interface_id": "WEB-001", "actor": "anonymous", "statement": "Consultar plantillas y endpoints, editar localmente una selección y solicitar al servidor la resolución y exportación ZIP de la configuración."},
+    {"id": "REQ-UI-002", "interface_id": "WEB-002", "actor": "anonymous", "statement": "Consultar el catálogo maestro y filtrar localmente sus aplicaciones y features por texto, módulo y estado."},
+    {"id": "REQ-UI-003", "interface_id": "WEB-003", "actor": "anonymous", "statement": "Explorar el Master OpenAPI de las APIs generadas desde Swagger UI con la ejecución interactiva deshabilitada."}
+  ]
+}
